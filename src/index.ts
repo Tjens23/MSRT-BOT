@@ -3,6 +3,7 @@ import './lib/setup';
 
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
+import { database } from './database';
 
 const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX,
@@ -23,6 +24,10 @@ const client = new SapphireClient({
 
 const main = async () => {
 	try {
+		database
+			.initialize()
+			.then(() => client.logger.info('Database connected'))
+			.catch((error) => client.logger.fatal(error));
 		client.logger.info('Logging in');
 		await client.login();
 		client.logger.info('logged in');
