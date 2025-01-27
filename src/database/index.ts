@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import path from 'path';
 import { DataSource } from 'typeorm';
+import EnlistmentTickets from './entities/EnlistmentTickets';
 
 export const database: DataSource = new DataSource({
 	type: 'postgres',
@@ -11,5 +11,5 @@ export const database: DataSource = new DataSource({
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
-	entities: [path.join(__dirname, '../entities/*')]
+	entities: [EnlistmentTickets]
 });
