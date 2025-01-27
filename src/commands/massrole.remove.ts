@@ -15,6 +15,6 @@ export class MassRoleAdd extends Command {
 		if (!members || !roleToHave || !roleToAdd) return message.reply(`usage is \INvalkid\``);
 		const membersWithRole = members.filter((member) => member.roles.cache.has(roleToHave.id));
 		membersWithRole.forEach((member) => member.roles.remove(roleToAdd));
-		return message.reply(`Removed ${roleToAdd.name} to ${membersWithRole.size} members`);
+		return message.reply(`Removed ${roleToAdd.name} from ${membersWithRole.size} members`);
 	}
 }
