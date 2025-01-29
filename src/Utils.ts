@@ -79,6 +79,7 @@ export const createEnlistmentChannel = async (_guild: Guild, interaction: Intera
 				content: 'Thank you for your submission!',
 				ephemeral: true
 			});
+			collector.stop();
 		}
 	});
 
