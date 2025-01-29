@@ -50,16 +50,14 @@ export const createEnlistmentChannel = async (_guild: Guild, interaction: Intera
 			)
 		);
 
-	// Show the modal
 	await interaction.showModal(modal);
 
 	const filter = (modalInteraction: ModalSubmitInteraction): boolean =>
 		modalInteraction.isModalSubmit() && modalInteraction.customId === 'enlistment' && modalInteraction.user.id === interaction.user.id;
 
-	// Create an InteractionCollector for modal submissions
 	const collector = new InteractionCollector(interaction.client, {
 		filter,
-		time: 60000 // 60 seconds to submit the modal
+		time: 60000
 	});
 
 	collector.on('collect', async (modalInteraction) => {
