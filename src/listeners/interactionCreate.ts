@@ -13,6 +13,8 @@ export class InteractionCreateEvent extends Listener {
 	public async run(interaction: Interaction): Promise<void> {
 		if (!interaction.isButton()) return;
 
-		createEnlistmentChannel(interaction.guild!, interaction);
+		if (interaction.customId === 'enlist') {
+			createEnlistmentChannel(interaction.guild!, interaction);
+		}
 	}
 }

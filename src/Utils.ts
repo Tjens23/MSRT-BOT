@@ -39,7 +39,7 @@ export const capitalise = (string: any) => {
 
 export const createEnlistmentChannel = async (guild: Guild, interaction: Interaction) => {
 	if (!interaction.isButton()) return;
-	const button = new ButtonBuilder().setCustomId('enlistment').setStyle(ButtonStyle.Danger).setLabel('Close').setEmoji('🔒');
+	const button = new ButtonBuilder().setCustomId('close').setStyle(ButtonStyle.Danger).setLabel('Close').setEmoji('🔒');
 
 	const buttons = new ActionRowBuilder<ButtonBuilder>().setComponents(button);
 	const modal = new ModalBuilder()
@@ -47,19 +47,35 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 		.setCustomId('enlistment')
 		.setComponents(
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('What would be your callsign').setCustomId('callsign').setStyle(TextInputStyle.Short)
+				new TextInputBuilder()
+					.setLabel('What would be your callsign')
+					.setCustomId('callsign')
+					.setStyle(TextInputStyle.Short)
+					.setPlaceholder('Rico')
 			),
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('How old are you?').setCustomId('age').setStyle(TextInputStyle.Short)
+				new TextInputBuilder().setLabel('How old are you?').setCustomId('age').setStyle(TextInputStyle.Short).setPlaceholder('18')
 			),
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('What timezone are you in?').setCustomId('timezone').setStyle(TextInputStyle.Short)
+				new TextInputBuilder()
+					.setLabel('What timezone are you in?')
+					.setCustomId('timezone')
+					.setStyle(TextInputStyle.Short)
+					.setPlaceholder('GMT+1')
 			),
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('Where did you findout about MSRT?').setCustomId('lol').setStyle(TextInputStyle.Paragraph)
+				new TextInputBuilder()
+					.setLabel('Where did you find out about MSRT?')
+					.setCustomId('lol')
+					.setStyle(TextInputStyle.Paragraph)
+					.setPlaceholder('Discord, Reddit, etc.')
 			),
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('"Ready Or Not" or "Ground Branch" ').setCustomId('game').setStyle(TextInputStyle.Short)
+				new TextInputBuilder()
+					.setLabel('"Ready Or Not" or "Ground Branch" ')
+					.setCustomId('game')
+					.setStyle(TextInputStyle.Short)
+					.setPlaceholder('RoN, GB')
 			)
 		);
 
