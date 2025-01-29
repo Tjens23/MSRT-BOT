@@ -13,6 +13,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle
 } from 'discord.js';
+import EnlistmentTickets from './database/entities/EnlistmentTickets';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -39,6 +40,12 @@ export const capitalise = (string: any) => {
 
 export const createEnlistmentChannel = async (guild: Guild, interaction: Interaction) => {
 	if (!interaction.isButton()) return;
+	const data = await EnlistmentTickets.findOne({ where: { userId: interaction.user.id } });
+	if (data && !data.solved) {
+		await interaction.reply({ content: 'You already have an open ticket!', ephemeral: true });
+		return;
+	}
+
 	const button = new ButtonBuilder().setCustomId('close').setStyle(ButtonStyle.Danger).setLabel('Close').setEmoji('🔒');
 
 	const buttons = new ActionRowBuilder<ButtonBuilder>().setComponents(button);
@@ -152,6 +159,14 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 					iconURL: `${interaction.client.user.displayAvatarURL()}`
 				});
 
+			await EnlistmentTickets.create({
+				callsign: enlistmentData.callsign,
+				age: parseInt(enlistmentData.age),
+				timezone: enlistmentData.timezone,
+				platform: enlistmentData.lol,
+				game: enlistmentData.game,
+				userId: interaction.user.id
+			}).save();
 			channel.send({ embeds: [embed], components: [buttons] });
 
 			await modalInteraction.reply({
@@ -159,11 +174,11 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 				ephemeral: true
 			});
 
-			collector.stop();
+			return collector.stop();
 		}
 	});
 
-	collector.on('end', (_collected, reason) => {
+	return collector.on('end', (_collected, reason) => {
 		if (reason === 'time') {
 			interaction.followUp({
 				content: 'You took too long to fill out the form.',

@@ -6,10 +6,19 @@ export default class EnlistmentTickets extends BaseEntity {
 	id!: number;
 
 	@Column()
-	title!: string;
+	callsign!: string;
 
 	@Column()
-	description!: string;
+	age!: number;
+
+	@Column()
+	timezone!: string;
+
+	@Column()
+	platform!: string;
+
+	@Column()
+	game!: string;
 
 	@Column({ type: 'boolean', default: false })
 	solved!: boolean;
@@ -20,6 +29,6 @@ export default class EnlistmentTickets extends BaseEntity {
 	@Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
 	updatedAt!: Date;
 
-	@Column()
-	userId!: number;
+	@Column({ unique: true })
+	userId!: string;
 }
