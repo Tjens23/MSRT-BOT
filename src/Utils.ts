@@ -1,5 +1,10 @@
 import {
 	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	ChannelType,
+	Colors,
+	EmbedBuilder,
 	Guild,
 	Interaction,
 	InteractionCollector,
@@ -32,9 +37,11 @@ export const capitalise = (string: any) => {
 		.join(' ');
 };
 
-export const createEnlistmentChannel = async (_guild: Guild, interaction: Interaction) => {
+export const createEnlistmentChannel = async (guild: Guild, interaction: Interaction) => {
 	if (!interaction.isButton()) return;
+	const button = new ButtonBuilder().setCustomId('enlistment').setStyle(ButtonStyle.Danger).setLabel('Close').setEmoji('🔒');
 
+	const buttons = new ActionRowBuilder<ButtonBuilder>().setComponents(button);
 	const modal = new ModalBuilder()
 		.setTitle('Please fill out')
 		.setCustomId('enlistment')
@@ -46,7 +53,13 @@ export const createEnlistmentChannel = async (_guild: Guild, interaction: Intera
 				new TextInputBuilder().setLabel('How old are you?').setCustomId('age').setStyle(TextInputStyle.Short)
 			),
 			new ActionRowBuilder<TextInputBuilder>().setComponents(
-				new TextInputBuilder().setLabel('What timezone are you in?').setCustomId('timezone').setStyle(TextInputStyle.Paragraph)
+				new TextInputBuilder().setLabel('What timezone are you in?').setCustomId('timezone').setStyle(TextInputStyle.Short)
+			),
+			new ActionRowBuilder<TextInputBuilder>().setComponents(
+				new TextInputBuilder().setLabel('Where did you findout about MSRT?').setCustomId('lol').setStyle(TextInputStyle.Paragraph)
+			),
+			new ActionRowBuilder<TextInputBuilder>().setComponents(
+				new TextInputBuilder().setLabel('"Ready Or Not" or "Ground Branch" ').setCustomId('game').setStyle(TextInputStyle.Short)
 			)
 		);
 
@@ -65,29 +78,81 @@ export const createEnlistmentChannel = async (_guild: Guild, interaction: Intera
 			const enlistmentData = {
 				callsign: modalInteraction.fields.getTextInputValue('callsign'),
 				age: modalInteraction.fields.getTextInputValue('age'),
-				timezone: modalInteraction.fields.getTextInputValue('timezone')
+				timezone: modalInteraction.fields.getTextInputValue('timezone'),
+				lol: modalInteraction.fields.getTextInputValue('lol'),
+				game: modalInteraction.fields.getTextInputValue('game')
 			};
 
-			console.log(`Callsign: ${enlistmentData.callsign}`);
-			console.log(`Age: ${enlistmentData.age}`);
-			console.log(`Timezone: ${enlistmentData.timezone}`);
+			const channel = await guild.channels.create({
+				name: `${interaction.user.username}-${interaction.user.discriminator}`,
+				type: ChannelType.GuildText,
+				permissionOverwrites: [
+					{
+						id: interaction.user.id,
+						allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory']
+					},
+					{
+						id: guild.roles.everyone.id,
+						deny: ['ViewChannel']
+					}
+				]
+			});
 
-			// Respond to the user
+			const embed = new EmbedBuilder()
+				.setDescription(
+					`${interaction.user}, Do understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.`
+				)
+				.addFields(
+					{
+						name: 'Callsign',
+						value: enlistmentData.callsign,
+						inline: true
+					},
+					{
+						name: 'Age',
+						value: enlistmentData.age,
+						inline: true
+					},
+					{
+						name: 'Timezone',
+						value: enlistmentData.timezone,
+						inline: true
+					},
+					{
+						name: 'Where did you findout about MSRT?',
+						value: enlistmentData.lol,
+						inline: true
+					},
+					{
+						name: '"Ready Or Not" or "Ground Branch"',
+						value: enlistmentData.game,
+						inline: true
+					}
+				)
+				.setColor(Colors.Blue)
+				.setThumbnail(interaction.guild!.iconURL({ forceStatic: false }))
+				.setFooter({
+					text: `${interaction.client.user.username}`,
+					iconURL: `${interaction.client.user.displayAvatarURL()}`
+				});
+
+			channel.send({ embeds: [embed], components: [buttons] });
+
 			await modalInteraction.reply({
 				content: 'Thank you for your submission!',
 				ephemeral: true
 			});
+
 			collector.stop();
 		}
 	});
 
-	collector.on('end', (collected, reason) => {
+	collector.on('end', (_collected, reason) => {
 		if (reason === 'time') {
 			interaction.followUp({
 				content: 'You took too long to fill out the form.',
 				ephemeral: true
 			});
 		}
-		console.log(collected);
 	});
 };
