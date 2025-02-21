@@ -93,14 +93,7 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 
 	collector.on('collect', async (modalInteraction) => {
 		if (modalInteraction.isModalSubmit()) {
-			const enlistmentData = {
-				callsign: modalInteraction.fields.getTextInputValue('callsign'),
-				age: modalInteraction.fields.getTextInputValue('age'),
-				timezone: modalInteraction.fields.getTextInputValue('timezone'),
-				lol: modalInteraction.fields.getTextInputValue('lol'),
-				game: modalInteraction.fields.getTextInputValue('game')
-			};
-
+			const enlistmentData = getModalData(modalInteraction);
 			await checkAndCreateTicket(interaction.user.id, TIcketTypes.ENLISTMENT, interaction);
 			const channel = await guild.channels.create({
 				name: `${interaction.user.username}-${interaction.user.discriminator}`,
