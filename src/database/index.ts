@@ -1,6 +1,8 @@
-import 'dotenv/config';
+import
+	'dotenv/config';
 import { DataSource } from 'typeorm';
-import EnlistmentTickets from './entities/EnlistmentTickets';
+import EnlistmentTicket from "./entities/EnlistmentTicket";
+import User from "./entities/User";
 
 export const database: DataSource = new DataSource({
 	type: 'postgres',
@@ -11,5 +13,5 @@ export const database: DataSource = new DataSource({
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
-	entities: [EnlistmentTickets]
+	entities: [EnlistmentTicket, User]
 });

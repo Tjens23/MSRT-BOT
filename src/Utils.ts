@@ -13,7 +13,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle
 } from 'discord.js';
-import EnlistmentTickets from './database/entities/EnlistmentTickets';
+import EnlistmentTicket from './database/entities/EnlistmentTicket';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -40,11 +40,6 @@ export const capitalise = (string: any) => {
 
 export const createEnlistmentChannel = async (guild: Guild, interaction: Interaction) => {
 	if (!interaction.isButton()) return;
-	const data = await EnlistmentTickets.findOne({ where: { userId: interaction.user.id } });
-	if (data && !data.solved) {
-		await interaction.reply({ content: 'You already have an open ticket!', ephemeral: true });
-		return;
-	}
 
 	const button = new ButtonBuilder().setCustomId('close').setStyle(ButtonStyle.Danger).setLabel('Close').setEmoji('🔒');
 
@@ -98,14 +93,8 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 
 	collector.on('collect', async (modalInteraction) => {
 		if (modalInteraction.isModalSubmit()) {
-			const enlistmentData = {
-				callsign: modalInteraction.fields.getTextInputValue('callsign'),
-				age: modalInteraction.fields.getTextInputValue('age'),
-				timezone: modalInteraction.fields.getTextInputValue('timezone'),
-				lol: modalInteraction.fields.getTextInputValue('lol'),
-				game: modalInteraction.fields.getTextInputValue('game')
-			};
-
+			const enlistmentData = getModalData(modalInteraction);
+			await checkAndCreateTicket(interaction.user.id, TIcketTypes.ENLISTMENT, interaction);
 			const channel = await guild.channels.create({
 				name: `${interaction.user.username}-${interaction.user.discriminator}`,
 				type: ChannelType.GuildText,
@@ -158,17 +147,7 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 					text: `${interaction.client.user.username}`,
 					iconURL: `${interaction.client.user.displayAvatarURL()}`
 				});
-
-			await EnlistmentTickets.create({
-				callsign: enlistmentData.callsign,
-				age: parseInt(enlistmentData.age),
-				timezone: enlistmentData.timezone,
-				platform: enlistmentData.lol,
-				game: enlistmentData.game,
-				userId: interaction.user.id
-			}).save();
-			channel.send({ embeds: [embed], components: [buttons] });
-
+			channel.send({ content: `<@${interaction.user.id}>`, embeds: [embed], components: [buttons] });
 			await modalInteraction.reply({
 				content: 'Thank you for your submission!',
 				ephemeral: true
@@ -187,3 +166,45 @@ export const createEnlistmentChannel = async (guild: Guild, interaction: Interac
 		}
 	});
 };
+
+async function checkAndCreateTicket(userId: string, ticketType: TIcketTypes, interaction: Interaction) {
+	// Find a ticket that is either open or of the specified type for the given user
+	const existingTicket = await EnlistmentTicket.findOne({
+		where: [
+			{ userId: { userId }, closed: false },
+			{ userId: { userId }, ticketType }
+		]
+	});
+
+	if (existingTicket) {
+		// If an open ticket or a ticket of the specified type exists, do not allow creation'
+		await interaction.user.send(`You already have a(n) ${ticketType} ticket open.`);
+	}
+	const data = getModalData(interaction as ModalSubmitInteraction);
+	// Proceed with ticket creation if no such ticket exists
+	const newTicket = EnlistmentTicket.create({
+		userId: { userId },
+		ticketType,
+		timezone: data.timezone
+	});
+
+	await newTicket.save();
+	return newTicket;
+}
+
+export function getModalData(modalSubmit: ModalSubmitInteraction) {
+	return {
+		callsign: modalSubmit.fields.getTextInputValue('callsign'),
+		age: modalSubmit.fields.getTextInputValue('age'),
+		timezone: modalSubmit.fields.getTextInputValue('timezone'),
+		lol: modalSubmit.fields.getTextInputValue('lol'),
+		game: modalSubmit.fields.getTextInputValue('game')
+	};
+}
+
+export enum TIcketTypes {
+	LOA,
+	ENLISTMENT,
+	STAFF,
+	HR
+}
