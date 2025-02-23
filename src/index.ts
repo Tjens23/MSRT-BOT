@@ -5,7 +5,9 @@ import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
 import { database } from './database';
 
-const client = new SapphireClient({
+
+
+export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX,
 	caseInsensitiveCommands: true,
 	logger: {
