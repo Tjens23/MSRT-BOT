@@ -31,11 +31,11 @@ export class Joinevent extends Listener {
 			.setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL() })
 			.setColor(Colors.Blurple)
 			.setDescription(`Welcome to ${member.guild.name}, ${member}!`);
-		channel.send({ embeds: [welcomeEmbed] });
+		await channel.send({ embeds: [welcomeEmbed] });
 
 		const rolesToAdd: Array<Role> = [];
 
-		rolesToAdd.forEach((role: Role) => {
+    rolesToAdd.forEach((role: Role) => {
 			member.roles.add(role.id);
 		});
 	}
