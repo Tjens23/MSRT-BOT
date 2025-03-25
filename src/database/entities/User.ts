@@ -1,5 +1,6 @@
 import { OneToOne, Entity, BaseEntity, PrimaryColumn, Column} from 'typeorm'
 import EnlistmentTicket from "./EnlistmentTicket";
+import {UserActivity} from "./UserActivity";
 
 @Entity()
 export default class User extends BaseEntity {
@@ -14,4 +15,7 @@ export default class User extends BaseEntity {
 
     @OneToOne(() => EnlistmentTicket, (ticket) => ticket.userId)
     enlistmentTicket?: EnlistmentTicket;
+
+    @OneToOne(() => UserActivity, (activity) => activity.id)
+    activity!: UserActivity;
 }
