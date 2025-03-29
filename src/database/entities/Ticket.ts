@@ -1,4 +1,4 @@
-import { TIcketTypes } from "../../Utils";
+import { TIcketTypes } from "../../utils/Utils";
 import User from "./User";
 
 export interface ITicket {

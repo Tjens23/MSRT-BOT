@@ -105,21 +105,22 @@ export const CheckActivity = async (guild: Guild) => {
                                 content: `✅ **User ${member.user.tag} was kicked for inactivity.**`,
                                 components: [],
                             });
-                            console.log(`Kicked ${member.user.tag} for inactivity.`);
                         } catch (err) {
                             console.error(`Failed to kick ${member.user.tag}:`, err);
-                            await interaction.reply({ content: "❌ Failed to kick the user.", ephemeral: true });
+                            return await interaction.reply({ content: "❌ Failed to kick the user.", ephemeral: true });
                         }
                     } else if (interaction.customId === `no_kick_${member.id}`) {
-                        await interaction.update({
+                        return await interaction.update({
                             content: `❌ **User ${member.user.tag} will NOT be kicked.**`,
                             components: [],
                         });
-                        console.log(`User ${member.user.tag} was kept.`);
                     }
+                    
+                    // Handle any unexpected customId
+                    return await interaction.reply({ content: "❌ Invalid button interaction.", ephemeral: true });
                 });
 
-                collector.on("end", async (collected) => {
+                return collector.on("end", async (collected) => {
                     if (collected.size === 0) {
                         await message.edit({
                             content: "⌛ **No decision was made. The user will NOT be kicked.**",

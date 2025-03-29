@@ -1,5 +1,5 @@
 import {Entity, BaseEntity, Column, PrimaryGeneratedColumn, OneToOne} from 'typeorm'
-import { TIcketTypes } from "../../Utils";
+import { TIcketTypes } from  "../../utils/Utils";
 import { ITicket } from "./Ticket";
 import User from "./User";
 

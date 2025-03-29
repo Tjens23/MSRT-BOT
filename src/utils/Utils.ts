@@ -13,7 +13,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle
 } from 'discord.js';
-import EnlistmentTicket from './database/entities/EnlistmentTicket';
+import  EnlistmentTicket  from '../database/entities/EnlistmentTicket';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {

@@ -9,7 +9,7 @@ export const database: DataSource = new DataSource({
 	host: 'localhost',
 	port: 5432,
 	username: 'tjens23',
-	password: 'Hyg57aff',
+	password: '1234',
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
