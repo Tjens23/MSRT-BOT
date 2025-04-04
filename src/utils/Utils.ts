@@ -2,7 +2,6 @@ import { ButtonInteraction, ChannelType, GuildMember, PermissionFlagsBits } from
 import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
-import HRTicket from '../database/entities/HRTicket';
 
 
 export const trimArray = (arr: any, maxLen = 10) => {
@@ -115,15 +114,6 @@ export async function handleButton(interaction: ButtonInteraction) {
 			enlistment.game = 'Unknown';
 			ticket = enlistment;
 			break;
-    case TIcketTypes.STAFF:
-      ticket = HRTicket.create({
-        user,
-        ticketType,
-        closed: false,
-        report: 'Unknown', // Update later via modal or form
-        reason: 'Unknown' // Update later via modal or form
-      });
-      break;
     case TIcketTypes.HR:
       // Optional: create a HR ticket subclass
       ticket = Ticket.create({

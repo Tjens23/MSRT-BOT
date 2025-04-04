@@ -3,10 +3,10 @@ import Ticket from "./Ticket";
 
 @ChildEntity()
 export default class LOATicket extends Ticket {
-  @Column({ type: 'timestamp with local time zone' })
+  @Column({ type: 'timestamp' })
   startDate!: Date;
 
-  @Column({ type: 'timestamp with local time zone' })
+  @Column({ type: 'timestamp' })
   endDate!: Date;
 
   @Column({ type: 'varchar' })

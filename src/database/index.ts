@@ -5,7 +5,6 @@ import EnlistmentTicket from "./entities/EnlistmentTicket";
 import User from "./entities/User";
 import { UserActivity } from './entities/UserActivity';
 import Ticket from './entities/Ticket';
-import HRTicket from './entities/HRTicket';
 import LOATicket from './entities/LOATicket';
 
 export const database: DataSource = new DataSource({
@@ -17,5 +16,5 @@ export const database: DataSource = new DataSource({
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
-	entities: [EnlistmentTicket, User, UserActivity, Ticket, HRTicket, LOATicket]
+	entities: [EnlistmentTicket, User, UserActivity, Ticket, /*HRTicket*/ LOATicket]
 });
