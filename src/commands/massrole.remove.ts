@@ -4,6 +4,7 @@ import { Message } from 'discord.js';
 
 @ApplyOptions<Command.Options>({
 	description: 'removes a role from all members with a specific role',
+	requiredClientPermissions: ['ManageRoles'],
 	name: 'massrole-remove',
 	aliases: ['massroleremove', 'mrr']
 })

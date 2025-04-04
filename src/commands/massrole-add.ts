@@ -5,6 +5,7 @@ import { Message } from 'discord.js';
 @ApplyOptions<Command.Options>({
 	description: 'Add a role to all members with a specific role',
 	name: 'massrole-add',
+	requiredClientPermissions: ['ManageRoles'],
 	aliases: ['massroleadd', 'mra']
 })
 export class MassRoleAdd extends Command {
