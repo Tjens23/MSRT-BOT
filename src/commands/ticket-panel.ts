@@ -4,7 +4,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, Te
 ApplyOptions<CommandOptions>({
 	description: "Post the ticket creation panel",
 	name: 'ticket-panel',
-	preconditions: ['GuildOnly', "OwnerOnly"]
+	preconditions: ['OwnerOnly']
 });
 
 export class EnlistmentCommand extends Command {
@@ -33,6 +33,7 @@ export class EnlistmentCommand extends Command {
 				'Submit an Enlistment Ticket today! \nDo understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.'
 			)
 			.setFooter({ iconURL: message.guild!.members.me?.displayAvatarURL().toString(), text: message.guild!.name });
+		await message.delete()
 		await channel.send({ embeds: [embed], components: [buttons] });
 	}
 }

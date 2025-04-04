@@ -54,7 +54,7 @@ export default class helpCommand extends Command {
 
 			let categories;
 			if (!OWNERS.includes(message.author.id)) {
-				categories = await removeDuplicates(
+				categories = removeDuplicates(
 					this.container.stores
 						.get('commands')
 						.filter((cmd: any) => cmd.category !== 'Owner')
