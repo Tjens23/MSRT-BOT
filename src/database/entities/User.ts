@@ -1,11 +1,11 @@
-import { OneToOne, Entity, BaseEntity, PrimaryColumn, Column} from 'typeorm'
-import EnlistmentTicket from "./EnlistmentTicket";
-import {UserActivity} from "./UserActivity";
+import { OneToOne, Entity, BaseEntity, PrimaryColumn, Column } from 'typeorm';
+import { UserActivity } from "./UserActivity";
+import Ticket from './Ticket';
 
 @Entity()
 export default class User extends BaseEntity {
     @PrimaryColumn({ type: 'varchar', unique: true })
-    userId!: string
+    userId!: string;
 
     @Column({ type: 'varchar' })
     username!: string;
@@ -13,9 +13,9 @@ export default class User extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     callsign!: string;
 
-    @OneToOne(() => EnlistmentTicket, (ticket) => ticket.userId)
-    enlistmentTicket?: EnlistmentTicket;
+    @OneToOne(() => Ticket, (ticket) => ticket.user)
+    ticket!: Ticket;
 
-    @OneToOne(() => UserActivity, (activity) => activity.id)
+    @OneToOne(() => UserActivity, (activity) => activity.user)
     activity!: UserActivity;
 }

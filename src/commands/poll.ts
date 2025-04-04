@@ -12,10 +12,10 @@ export class PollCommand extends Command {
 		const title = await args.pickResult('string');
 		const description = await args.pickResult('string');
 		const optionsString = await args.restResult('string');
-
+		
 		if (!title.isOk() || !description.isOk() || !optionsString.isOk()) {
 			return message.reply(
-				'Usage: ?poll <title> <description> <options>\nExample: ?poll "Favorite Color" "What is your favorite color?" "Red,Blue,Green"'
+				'Usage: ?poll <title> <description> <options>\nExample: ?poll Favorite Color What is your favorite color? Red,Blue,Green'
 			);
 		}
 
@@ -28,6 +28,7 @@ export class PollCommand extends Command {
 		}
 
 		const votes = new Map<string, number>();
+		const hasVoted = new Map<string, boolean>();
 		options.forEach((option) => votes.set(option, 0));
 
 		const buttons = options.map((option, index) =>
@@ -57,6 +58,7 @@ export class PollCommand extends Command {
 		const embed = new EmbedBuilder()
 			.setTitle(title.unwrap())
 			.setDescription(description.unwrap())
+			.setThumbnail(message.guild!.members.me?.displayAvatarURL().toString() || '')
 			.addFields({ name: 'Results', value: generateResults() })
 			.setFooter({ text: 'Vote by clicking the buttons below!' });
 
@@ -70,22 +72,24 @@ export class PollCommand extends Command {
 
 		collector.on('collect', async (interaction: ButtonInteraction) => {
 			if (!interaction.isButton()) return;
-
+	
+			if (hasVoted.get(interaction.user.id)) return interaction.reply({ content: 'You have already voted!', ephemeral: true });
+			
 			const selectedOption = interaction.customId.split('_')[1];
 			const option = options[parseInt(selectedOption)];
 
 			votes.set(option, (votes.get(option) || 0) + 1);
-
 			embed.spliceFields(0, 1, { name: 'Results', value: generateResults() });
 			await pollMessage.edit({ embeds: [embed] });
 
-			await interaction.reply({ content: `Your vote for **${option}** has been recorded!`, ephemeral: true });
+		
+			hasVoted.set(interaction.user.id, true);
+			return await interaction.reply({ content: `Your vote for **${option}** has been recorded!`, ephemeral: true });
 		});
 
-		collector.on('end', () => {
+		return collector.on('end', () => {
 			embed.setFooter({ text: 'Poll ended!' });
 			pollMessage.edit({ embeds: [embed], components: [] });
 		});
-		return;
 	}
 }

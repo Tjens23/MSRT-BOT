@@ -1,25 +1,11 @@
-import {Entity, BaseEntity, Column, PrimaryGeneratedColumn, OneToOne} from 'typeorm'
-import { TIcketTypes } from  "../../utils/Utils";
-import { ITicket } from "./Ticket";
-import User from "./User";
+import { ChildEntity, Column } from "typeorm";
+import Ticket from "./Ticket";
 
-@Entity()
-export default class EnlistmentTicket extends BaseEntity implements ITicket {
-    @PrimaryGeneratedColumn()
-    id!: number;
+@ChildEntity()
+export default class EnlistmentTicket extends Ticket {
+  @Column({ type: "varchar" })
+  timezone!: string;
 
-    @Column({ type: 'boolean', default: false })
-    closed!: boolean;
-
-    @Column({ type: 'enum', enum: TIcketTypes, default: TIcketTypes.ENLISTMENT })
-    ticketType!: TIcketTypes;
-
-    @OneToOne(() => User, (user) => user.userId)
-    userId!: User
-
-    @Column({ type: 'varchar' })
-    timezone!: string;
-
-    @Column({ type: 'varchar'})
-    game!: string
+  @Column({ type: "varchar" })
+  game!: string;
 }
