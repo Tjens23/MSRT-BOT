@@ -33,10 +33,22 @@ export class Joinevent extends Listener {
 			.setDescription(`Welcome to ${member.guild.name}, ${member}!`);
 		await channel.send({ embeds: [welcomeEmbed] });
 
-		const rolesToAdd: Array<Role> = [];
+		const rolesToAdd: Array<string> = [
+			"1329257834734555226",
+			"1100345563876163705",
+			"1100348729497751552",
+			"1100346569477345390",
+			"1100346772854931537",
+			"1187136067250434148",
+			"1100346938039210085",
+			"1100346987091603467",
+			"1131329124338761919"
+		];
 
-    rolesToAdd.forEach((role: Role) => {
-			member.roles.add(role.id);
+		rolesToAdd.forEach((roleId: string) => {
+			member.roles.add(roleId);
 		});
+
+		logChannel.send(`Added roles to ${member.user.tag}`);
 	}
 }
