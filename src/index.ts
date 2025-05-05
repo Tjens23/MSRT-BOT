@@ -4,8 +4,7 @@ import './lib/setup';
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
 import { database } from './database';
-
-
+import { CheckActivity } from './utils/checkActivity';
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX,
@@ -33,6 +32,7 @@ const main = async () => {
 		client.logger.info('Logging in');
 		await client.login();
 		client.logger.info('logged in');
+		await CheckActivity(client.guilds.cache.get('1253817742054654075'));
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();

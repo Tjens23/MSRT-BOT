@@ -13,13 +13,14 @@ import { excludedRoleIds } from "./excludeRoleIds";
 
 const staffRoleId = "YOUR_STAFF_ROLE_ID"; // Replace with actual staff role ID
 const logChannelId = "YOUR_LOG_CHANNEL_ID"; // Replace with channel where staff will decide
+const devNotifyChannelId = "1170267330379513876"; // Channel ID for dev-notify
 
 export const CheckActivity = async (guild: Guild) => {
     const guilds = client.guilds.cache.get('1253817742054654075');
     if (!guilds) return console.log("Couldn't find guild with ID: " + '1253817742054654075');
 
     const members = await guild.members.fetch();
-    const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
     const excludedRoles = await excludedRoleIds();
 
     for (const member of members.values()) {
@@ -48,11 +49,15 @@ export const CheckActivity = async (guild: Guild) => {
         const lastVoiceActivity = member.voice.channelId ? Date.now() : 0;
         const lastActivity = Math.max(lastMessageTimestamp, lastVoiceActivity);
 
-        if (lastActivity === 0 || lastActivity < oneMonthAgo) {
+        if (lastActivity === 0 || lastActivity < twoWeeksAgo) {
             try {
-                const logChannel = await client.channels.fetch(logChannelId) as TextChannel;
-                if (!logChannel || !logChannel.isTextBased()) {
-                    console.error(`Log channel not found.`);
+                await member.send("You've been inactive for 2 weeks. Please be more active or you will be kicked.");
+            } catch (err) {
+                console.error(`Failed to send DM to ${member.user.tag}:`, err);
+
+                const devNotifyChannel = await client.channels.fetch(devNotifyChannelId) as TextChannel;
+                if (!devNotifyChannel || !devNotifyChannel.isTextBased()) {
+                    console.error(`Dev-notify channel not found.`);
                     continue;
                 }
 
@@ -81,7 +86,7 @@ export const CheckActivity = async (guild: Guild) => {
 
                 const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(yesButton, noButton);
 
-                const message = await logChannel.send({
+                const message = await devNotifyChannel.send({
                     content: `🔔 <@&${staffRoleId}> **Staff Decision Needed**`,
                     embeds: [embed],
                     components: [actionRow],
@@ -100,7 +105,7 @@ export const CheckActivity = async (guild: Guild) => {
 
                     if (interaction.customId === `kick_${member.id}`) {
                         try {
-                            await member.kick("Inactive for over a month (Approved by staff)");
+                            await member.kick("Inactive for over 2 weeks (Approved by staff)");
                             await interaction.update({
                                 content: `✅ **User ${member.user.tag} was kicked for inactivity.**`,
                                 components: [],
@@ -130,8 +135,6 @@ export const CheckActivity = async (guild: Guild) => {
                     }
                 });
 
-            } catch (err) {
-                console.error(`Failed to send staff decision message for ${member.user.tag}:`, err);
             }
         }
     }
