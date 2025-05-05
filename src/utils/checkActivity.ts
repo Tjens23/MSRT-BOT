@@ -12,7 +12,6 @@ import { client } from "../index";
 import { excludedRoleIds } from "./excludeRoleIds";
 
 const staffRoleId = "YOUR_STAFF_ROLE_ID"; // Replace with actual staff role ID
-const logChannelId = "YOUR_LOG_CHANNEL_ID"; // Replace with channel where staff will decide
 const devNotifyChannelId = "1170267330379513876"; // Channel ID for dev-notify
 
 export const CheckActivity = async (guild: Guild) => {
