@@ -2,7 +2,7 @@ import { ButtonInteraction, ChannelType, GuildMember, PermissionFlagsBits } from
 import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
-
+import HRTicket from '../database/entities/HRTicket';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -41,14 +41,11 @@ export interface ITicket {
 	userId: User;
 }
 
-
-
-
-
 const TICKET_TYPE_MAP = {
 	ticket_enlistment: TIcketTypes.ENLISTMENT,
 	ticket_staff: TIcketTypes.STAFF,
-	ticket_loa: TIcketTypes.LOA
+	ticket_loa: TIcketTypes.LOA,
+	ticket_hr: TIcketTypes.HR
 };
 
 export async function handleButton(interaction: ButtonInteraction) {
@@ -114,15 +111,14 @@ export async function handleButton(interaction: ButtonInteraction) {
 			enlistment.game = 'Unknown';
 			ticket = enlistment;
 			break;
-    case TIcketTypes.HR:
-      // Optional: create a HR ticket subclass
-      ticket = Ticket.create({
-        user,
-        ticketType,
-        closed: false
-      });
-      break;
-
+		case TIcketTypes.HR:
+			const hrTicket = new HRTicket();
+			hrTicket.user = user;
+			hrTicket.ticketType = TIcketTypes.HR;
+			hrTicket.closed = false;
+			hrTicket.reason = 'Unknown'; // Update later via modal or form
+			ticket = hrTicket;
+			break;
 		// Optional: other ticket subclasses
 		default:
 			ticket = Ticket.create({
@@ -137,4 +133,3 @@ export async function handleButton(interaction: ButtonInteraction) {
 	await channel.send(`<@${interaction.user.id}> Your ticket has been created!`);
 	return await interaction.reply({ content: `✅ Ticket created: <#${channel.id}>`, ephemeral: true });
 }
-

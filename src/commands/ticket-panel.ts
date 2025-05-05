@@ -17,8 +17,8 @@ export class EnlistmentCommand extends Command {
 			  .setLabel("🪖 Enlistment")
 			  .setStyle(ButtonStyle.Primary),
 			new ButtonBuilder()
-			  .setCustomId("ticket_staff")
-			  .setLabel("🛠 Staff Support")
+			  .setCustomId("ticket_hr")
+			  .setLabel("🛠 HR ticket")
 			  .setStyle(ButtonStyle.Secondary),
 			new ButtonBuilder()
 			  .setCustomId("ticket_loa")
@@ -30,7 +30,10 @@ export class EnlistmentCommand extends Command {
 				name: 'Marine Special Reactions Enlistment'
 			})
 			.setDescription(
-				'Submit an Enlistment Ticket today! \nDo understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.'
+				'Submit an Enlistment Ticket today! \nDo understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.\n\n' +
+				'🪖 **Enlistment** - for enlisting in the server\n' +
+				'🛠 **HR ticket** - anything regarding HR\n' +
+				'📆 **LOA** - for when you need to go on LOA'
 			)
 			.setFooter({ iconURL: message.guild!.members.me?.displayAvatarURL().toString(), text: message.guild!.name });
 		await message.delete()
