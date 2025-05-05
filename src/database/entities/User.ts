@@ -13,6 +13,12 @@ export default class User extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     callsign!: string;
 
+    @Column({ type: 'varchar' })
+    rank!: string;
+
+    @Column({ type: 'timestamp' })
+    promotionTimestamp!: Date;
+
     @OneToOne(() => Ticket, (ticket) => ticket.user)
     ticket!: Ticket;
 
