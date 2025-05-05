@@ -16,6 +16,7 @@
 		"discord.js": "^14.17.3",
 		"dotenv": "^16.4.7",
 		"googleapis": "^144.0.0",
+		"node-cron": "^3.0.3",
 		"pg": "^8.13.1",
 		"typeorm": "^0.3.20"
 	},
@@ -37,7 +38,8 @@
 		"start": "node dist/index.js",
 		"dev": "npm run build && npm run start",
 		"watch:start": "tsc-watch --onSuccess \"npm run start\"",
-		"format": "prettier --write \"src/\""
+		"format": "prettier --write \"src/\"",
+		"cron": "node -e \"require('./dist/index').checkYouTubeChannel()\""
 	},
 	"prettier": "@sapphire/prettier-config"
 }

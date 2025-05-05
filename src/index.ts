@@ -5,6 +5,8 @@ import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
 import { database } from './database';
 import { CheckActivity } from './utils/checkActivity';
+import { google } from 'googleapis';
+import cron from 'node-cron';
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX,
@@ -23,6 +25,28 @@ export const client = new SapphireClient({
 	loadMessageCommandListeners: true
 });
 
+const checkYouTubeChannel = async () => {
+	const youtube = google.youtube({
+		version: 'v3',
+		auth: process.env.YOUTUBE_API_KEY
+	});
+
+	const response = await youtube.search.list({
+		part: 'snippet',
+		channelId: process.env.YOUTUBE_CHANNEL_ID,
+		order: 'date',
+		maxResults: 1
+	});
+
+	const latestVideo = response.data.items?.[0];
+	if (latestVideo) {
+		const channel = client.channels.cache.find(channel => channel.name === 'msrt-media');
+		if (channel && channel.isTextBased()) {
+			await channel.send(`New video or stream: https://www.youtube.com/watch?v=${latestVideo.id.videoId}`);
+		}
+	}
+};
+
 const main = async () => {
 	try {
 		database
@@ -33,6 +57,7 @@ const main = async () => {
 		await client.login();
 		client.logger.info('logged in');
 		await CheckActivity(client.guilds.cache.get('1253817742054654075'));
+		cron.schedule('*/5 * * * *', checkYouTubeChannel);
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();
