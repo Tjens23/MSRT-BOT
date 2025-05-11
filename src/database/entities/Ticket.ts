@@ -7,8 +7,8 @@ import {
     OneToOne,
     JoinColumn,
   } from "typeorm";
-  import { TIcketTypes } from "../../utils/Utils";
   import User from "./User";
+import { TIcketTypes } from "../../utils/enums/TicketTypes";
   
   @Entity("tickets")
   @TableInheritance({ column: { type: "varchar", name: "type" } }) // key for inheritance
@@ -25,5 +25,13 @@ import {
   
     @Column({ type: "enum", enum: TIcketTypes, default: TIcketTypes.ENLISTMENT })
     ticketType!: TIcketTypes;
+
+    @Column({ type: "varchar" })
+    title!: string;
+
+    @Column({ type: "text" })
+    description!: string;
+
+    @Column({ type: "varchar" })
+    status!: string;
   }
-  

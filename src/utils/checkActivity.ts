@@ -1,6 +1,5 @@
 import {
     CategoryChannel,
-    Guild,
     TextChannel,
     ButtonBuilder,
     ButtonStyle,
@@ -11,12 +10,12 @@ import {
 import { client } from "../index";
 import { excludedRoleIds } from "./excludeRoleIds";
 
-const staffRoleId = "YOUR_STAFF_ROLE_ID"; // Replace with actual staff role ID
-const devNotifyChannelId = "1170267330379513876"; // Channel ID for dev-notify
+const staffRoleId = "1277312995558690935"; // Replace with actual staff role ID
+const devNotifyChannelId = "1328502110253482105"; // Channel ID for dev-notify
 
-export const CheckActivity = async (guild: Guild) => {
-    const guilds = client.guilds.cache.get('1253817742054654075');
-    if (!guilds) return console.log("Couldn't find guild with ID: " + '1253817742054654075');
+export const CheckActivity = async () => {
+    const guild = client.guilds.cache.get('1253817742054654075');
+    if (!guild) return console.log("Couldn't find guild with ID: " + '1253817742054654075');
 
     const members = await guild.members.fetch();
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;

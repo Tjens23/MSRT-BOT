@@ -3,6 +3,7 @@ import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
 import HRTicket from '../database/entities/HRTicket';
+import { TIcketTypes } from './enums/TicketTypes';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -27,19 +28,9 @@ export const capitalise = (string: any) => {
 		.join(' ');
 };
 
-export enum TIcketTypes {
-	LOA,
-	ENLISTMENT,
-	STAFF,
-	HR
-}
 
-export interface ITicket {
-	id: number;
-	closed: boolean;
-	ticketType: TIcketTypes;
-	userId: User;
-}
+
+
 
 const TICKET_TYPE_MAP = {
 	ticket_enlistment: TIcketTypes.ENLISTMENT,

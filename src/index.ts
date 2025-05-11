@@ -2,11 +2,15 @@ import 'dotenv/config';
 import './lib/setup';
 
 import { LogLevel, SapphireClient } from '@sapphire/framework';
-import { GatewayIntentBits, TextChannel } from 'discord.js';
+import { GatewayIntentBits } from 'discord.js';
 import { database } from './database';
 import { CheckActivity } from './utils/checkActivity';
+/*
 import { google, youtube_v3 } from 'googleapis';
+*/
+
 import cron from 'node-cron';
+
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX,
@@ -24,7 +28,7 @@ export const client = new SapphireClient({
 	],
 	loadMessageCommandListeners: true
 });
-
+/*
 const checkYouTubeChannel = async () => {
 	const youtube = google.youtube({
 		version: 'v3',
@@ -38,7 +42,7 @@ const checkYouTubeChannel = async () => {
 		maxResults: 1
 	});
 
-	const latestVideo = response.data.items?.[0];
+	const latestVideo: any = response.data.items?.[0];
 	if (latestVideo) {
 		const channel = client.channels.cache.find(channel => channel.name === 'msrt-media') as TextChannel;
 		if (channel) {
@@ -46,7 +50,7 @@ const checkYouTubeChannel = async () => {
 		}
 	}
 };
-
+*/
 const main = async () => {
 	try {
 		database
@@ -56,8 +60,9 @@ const main = async () => {
 		client.logger.info('Logging in');
 		await client.login();
 		client.logger.info('logged in');
-		await CheckActivity(client.guilds.cache.get('1253817742054654075') as any);
-		cron.schedule('*/5 * * * *', checkYouTubeChannel);
+		await CheckActivity();
+		cron.schedule('*/5 * * * *', await CheckActivity);
+		//cron.schedule('*/5 * * * *', checkYouTubeChannel);
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();
