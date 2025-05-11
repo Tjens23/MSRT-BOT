@@ -7,6 +7,7 @@ import { UserActivity } from './entities/UserActivity';
 import Ticket from './entities/Ticket';
 import LOATicket from './entities/LOATicket';
 import HRTicket from './entities/HRTicket';
+import { Guild } from 'discord.js';
 
 export const database: DataSource = new DataSource({
 	type: 'postgres',
@@ -17,5 +18,5 @@ export const database: DataSource = new DataSource({
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
-	entities: [EnlistmentTicket, User, UserActivity, Ticket, HRTicket, LOATicket]
+	entities: [EnlistmentTicket, User, UserActivity, Ticket, HRTicket, LOATicket, Guild]
 });
