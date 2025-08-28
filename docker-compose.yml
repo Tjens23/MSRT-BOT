@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: msrt-bot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: msrtbot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Hyg57aff}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - bot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Discord Bot Application
+  bot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: msrt-bot
+    restart: unless-stopped
+    environment:
+      # Database connection
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: msrtbot
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-Hyg57aff}
+      
+      # Discord bot token (set this in your .env file)
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      
+      # Other environment variables
+      NODE_ENV: production
+    volumes:
+      # Mount logs directory for persistence
+      - bot_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bot-network
+    # If your bot has a web interface, uncomment the ports section
+    # ports:
+    #   - "3000:3000"
+
+volumes:
+  postgres_data:
+    driver: local
+  bot_logs:
+    driver: local
+
+networks:
+  bot-network:
+    driver: bridge
