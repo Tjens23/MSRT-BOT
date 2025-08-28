@@ -4,7 +4,7 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     TableInheritance,
-    OneToOne,
+    ManyToOne,
     JoinColumn,
   } from "typeorm";
   import User from "./User";
@@ -16,7 +16,7 @@ import { TIcketTypes } from "../../utils/enums/TicketTypes";
     @PrimaryGeneratedColumn()
     id!: number;
   
-    @OneToOne(() => User, (user) => user.ticket, { cascade: true })
+    @ManyToOne(() => User, (user) => user.tickets, { cascade: true })
     @JoinColumn({ name: "userId" })
     user!: User;
   
@@ -31,7 +31,4 @@ import { TIcketTypes } from "../../utils/enums/TicketTypes";
 
     @Column({ type: "text" })
     description!: string;
-
-    @Column({ type: "varchar" })
-    status!: string;
   }

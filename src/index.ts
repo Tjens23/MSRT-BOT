@@ -8,7 +8,7 @@ import { CheckActivity } from './utils/checkActivity';
 /*
 import { google, youtube_v3 } from 'googleapis';
 */
-import * as cron from 'node-cron';
+//import * as cron from 'node-cron';
 
 
 export const client = new SapphireClient({
@@ -60,7 +60,7 @@ const main = async () => {
 		await client.login();
 		client.logger.info('logged in');
 		await CheckActivity();
-		cron.schedule('*/5 * * * *', await CheckActivity);
+		//cron.schedule('*/5 * * * *', await CheckActivity);
 		//cron.schedule('*/5 * * * *', checkYouTubeChannel);
 	} catch (error) {
 		client.logger.fatal(error);

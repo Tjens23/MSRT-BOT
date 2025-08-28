@@ -14,8 +14,8 @@ export default class User extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     callsign!: string;
 
-    @OneToOne(() => Ticket, (ticket) => ticket.user)
-    ticket!: Ticket;
+    @OneToMany(() => Ticket, (ticket) => ticket.user)
+    tickets!: Ticket[];
 
     @OneToOne(() => UserActivity, (activity) => activity.user)
     activity!: UserActivity;
