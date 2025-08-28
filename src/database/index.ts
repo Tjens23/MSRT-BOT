@@ -7,14 +7,14 @@ import { UserActivity } from './entities/UserActivity';
 import Ticket from './entities/Ticket';
 import LOATicket from './entities/LOATicket';
 import HRTicket from './entities/HRTicket';
-import { Guild } from 'discord.js';
+import Guild from './entities/Guild';
 
 export const database: DataSource = new DataSource({
 	type: 'postgres',
 	host: 'localhost',
 	port: 5432,
 	username: 'postgres',
-	password: 'Azizaetl8.',
+	password: 'Hyg57aff',
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,

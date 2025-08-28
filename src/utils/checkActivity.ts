@@ -9,6 +9,9 @@ import {
 } from "discord.js";
 import { client } from "../index";
 import { excludedRoleIds } from "./excludeRoleIds";
+import { database } from "../database";
+import User from "../database/entities/User";
+import { UserActivity } from "../database/entities/UserActivity";
 
 const staffRoleId = "1277312995558690935"; // Replace with actual staff role ID
 const devNotifyChannelId = "1328502110253482105"; // Channel ID for dev-notify
@@ -21,15 +24,53 @@ export const CheckActivity = async () => {
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
     const excludedRoles = await excludedRoleIds();
 
-    for (const member of members.values()) {
+    // Initialize database connection if not already connected
+    if (!database.isInitialized) {
+        await database.initialize();
+    }
+
+    for (const member of Array.from(members.values())) {
         if (member.user.bot) continue;
 
         const hasExcludedRole = member.roles.cache.some((role) => excludedRoles.includes(role.id));
         if (hasExcludedRole) continue;
 
+        // Check if user exists in database, if not create them
+        let user = await User.findOne({ 
+            where: { userId: member.user.id },
+            relations: ['activity']
+        });
+
+        if (!user) {
+            // Create new user
+            user = new User();
+            user.userId = member.user.id;
+            user.username = member.user.username;
+            user.callsign = member.user.username; // You might want to set this differently
+            await user.save();
+
+            // Create user activity record
+            const userActivity = new UserActivity();
+            userActivity.user = user;
+            userActivity.lastActive = new Date();
+            userActivity.joinedServer = member.joinedAt || new Date();
+            await userActivity.save();
+        } else if (!user.activity) {
+            // User exists but no activity record
+            const userActivity = new UserActivity();
+            userActivity.user = user;
+            userActivity.lastActive = new Date();
+            userActivity.joinedServer = member.joinedAt || new Date();
+            await userActivity.save();
+        } else if (!user.activity.joinedServer && member.joinedAt) {
+            // Update existing activity record with join date if missing
+            user.activity.joinedServer = member.joinedAt;
+            await user.activity.save();
+        }
+
         let lastMessageTimestamp = 0;
 
-        for (const channel of guild.channels.cache.values()) {
+        for (const channel of Array.from(guild.channels.cache.values())) {
             if (channel.isTextBased() && !(channel instanceof CategoryChannel)) {
                 const textChannel = channel as TextChannel;
                 try {
@@ -46,6 +87,12 @@ export const CheckActivity = async () => {
 
         const lastVoiceActivity = member.voice.channelId ? Date.now() : 0;
         const lastActivity = Math.max(lastMessageTimestamp, lastVoiceActivity);
+
+        // Update last activity in database if there was recent activity
+        if (lastActivity > 0 && user && user.activity) {
+            user.activity.lastActive = new Date(lastActivity);
+            await user.activity.save();
+        }
 
         if (lastActivity === 0 || lastActivity < twoWeeksAgo) {
             try {

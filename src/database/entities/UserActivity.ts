@@ -12,4 +12,7 @@ export class UserActivity extends BaseEntity {
 
     @Column({ type: 'timestamp' })
     lastActive!: Date;
+
+    @Column({ type: 'timestamp', nullable: true })
+    joinedServer?: Date;
 }

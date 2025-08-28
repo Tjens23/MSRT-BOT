@@ -4,6 +4,8 @@ import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
 import HRTicket from '../database/entities/HRTicket';
 import { TIcketTypes } from './enums/TicketTypes';
+import { UserActivity } from '../database/entities/UserActivity';
+import { database } from '../database';
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -15,7 +17,7 @@ export const trimArray = (arr: any, maxLen = 10) => {
 };
 
 export function removeDuplicates<T extends Array<T>>(arr: T) {
-	return [...new Set(arr)];
+	return Array.from(new Set(arr));
 }
 
 export const capitalise = (string: any) => {
@@ -123,4 +125,90 @@ export async function handleButton(interaction: ButtonInteraction) {
 
 	await channel.send(`<@${interaction.user.id}> Your ticket has been created!`);
 	return await interaction.reply({ content: `✅ Ticket created: <#${channel.id}>`, ephemeral: true });
+}
+
+/**
+ * Get user's server join time and time spent in server
+ * @param userId - Discord user ID
+ * @returns Object containing join date and time in server
+ */
+export async function getUserServerTime(userId: string) {
+	// Initialize database if not connected
+	if (!database.isInitialized) {
+		await database.initialize();
+	}
+
+	const user = await User.findOne({
+		where: { userId },
+		relations: ['activity']
+	});
+
+	if (!user || !user.activity || !user.activity.joinedServer) {
+		return null;
+	}
+
+	const joinedDate = user.activity.joinedServer;
+	const now = new Date();
+	const timeInServer = now.getTime() - joinedDate.getTime();
+	
+	// Convert to readable format
+	const days = Math.floor(timeInServer / (1000 * 60 * 60 * 24));
+	const hours = Math.floor((timeInServer % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+	const minutes = Math.floor((timeInServer % (1000 * 60 * 60)) / (1000 * 60));
+
+	return {
+		joinedDate,
+		timeInServer: {
+			total: timeInServer,
+			days,
+			hours,
+			minutes,
+			formatted: `${days} days, ${hours} hours, ${minutes} minutes`
+		}
+	};
+}
+
+/**
+ * Get all users and their server time statistics
+ * @returns Array of users with their server time data
+ */
+export async function getAllUsersServerTime() {
+	// Initialize database if not connected
+	if (!database.isInitialized) {
+		await database.initialize();
+	}
+
+	const users = await User.find({
+		relations: ['activity']
+	});
+
+	return users.map(user => {
+		if (!user.activity || !user.activity.joinedServer) {
+			return {
+				userId: user.userId,
+				username: user.username,
+				joinedDate: null,
+				timeInServer: null
+			};
+		}
+
+		const joinedDate = user.activity.joinedServer;
+		const now = new Date();
+		const timeInServer = now.getTime() - joinedDate.getTime();
+		const days = Math.floor(timeInServer / (1000 * 60 * 60 * 24));
+
+		return {
+			userId: user.userId,
+			username: user.username,
+			joinedDate,
+			timeInServer: {
+				total: timeInServer,
+				days,
+				formatted: `${days} days`
+			}
+		};
+	}).sort((a, b) => {
+		if (!a.timeInServer || !b.timeInServer) return 0;
+		return b.timeInServer.total - a.timeInServer.total; // Sort by most time in server
+	});
 }

@@ -8,7 +8,7 @@ import { CheckActivity } from './utils/checkActivity';
 /*
 import { google, youtube_v3 } from 'googleapis';
 */
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 
 
 export const client = new SapphireClient({
