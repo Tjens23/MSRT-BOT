@@ -4,7 +4,6 @@ import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
 import HRTicket from '../database/entities/HRTicket';
 import { TIcketTypes } from './enums/TicketTypes';
-import { UserActivity } from '../database/entities/UserActivity';
 import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { database } from '../database';
 
