@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import EnlistmentTicket from "./entities/EnlistmentTicket";
 import User from "./entities/User";
 import { UserActivity } from './entities/UserActivity';
+import { UserRankHistory } from './entities/UserRankHistory';
 import Ticket from './entities/Ticket';
 import LOATicket from './entities/LOATicket';
 import HRTicket from './entities/HRTicket';
@@ -18,5 +19,5 @@ export const database: DataSource = new DataSource({
 	database: 'msrtbot',
 	synchronize: true,
 	logging: true,
-	entities: [EnlistmentTicket, User, UserActivity, Ticket, HRTicket, LOATicket, Guild]
+	entities: [EnlistmentTicket, User, UserActivity, UserRankHistory, Ticket, HRTicket, LOATicket, Guild]
 });

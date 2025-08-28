@@ -3,6 +3,7 @@ import { ChannelType, Colors, EmbedBuilder, GuildMember, Role, TextChannel } fro
 import { database } from '../database';
 import User from '../database/entities/User';
 import { UserActivity } from '../database/entities/UserActivity';
+import { trackRankChanges } from '../utils/rankTracking';
 
 export class Joinevent extends Listener {
 	public constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -54,6 +55,9 @@ export class Joinevent extends Listener {
 		} catch (error) {
 			console.error('Error saving user join data to database:', error);
 		}
+
+		// Track initial ranks for the new member
+		await trackRankChanges(member);
 
 		const channel: TextChannel = member.guild.channels.cache.find((channel) => channel.name === 'welcome') as TextChannel;
 		const logChannel: TextChannel = member.guild.channels.cache.find((channel) => channel.name === 'logs') as TextChannel;

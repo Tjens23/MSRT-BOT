@@ -5,6 +5,7 @@ import EnlistmentTicket from '../database/entities/EnlistmentTicket';
 import HRTicket from '../database/entities/HRTicket';
 import { TIcketTypes } from './enums/TicketTypes';
 import { UserActivity } from '../database/entities/UserActivity';
+import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { database } from '../database';
 
 export const trimArray = (arr: any, maxLen = 10) => {
@@ -211,4 +212,51 @@ export async function getAllUsersServerTime() {
 		if (!a.timeInServer || !b.timeInServer) return 0;
 		return b.timeInServer.total - a.timeInServer.total; // Sort by most time in server
 	});
+}
+
+/**
+ * Get rank statistics for a specific role
+ * @param roleId - The role ID to get statistics for
+ * @returns Statistics about the rank
+ */
+export async function getRankStatistics(roleId: string) {
+	// Initialize database if not connected
+	if (!database.isInitialized) {
+		await database.initialize();
+	}
+
+	const allRankRecords = await UserRankHistory.find({
+		where: { roleId },
+		relations: ['user']
+	});
+
+	const activeRecords = allRankRecords.filter(record => record.isActive);
+	const inactiveRecords = allRankRecords.filter(record => !record.isActive);
+
+	// Calculate average time in rank for those who left the rank
+	let averageTimeInRank = 0;
+	if (inactiveRecords.length > 0) {
+		const totalTime = inactiveRecords.reduce((sum, record) => sum + record.getDurationInRole(), 0);
+		averageTimeInRank = totalTime / inactiveRecords.length;
+	}
+
+	// Find longest serving current member
+	let longestServing = null;
+	if (activeRecords.length > 0) {
+		longestServing = activeRecords.reduce((longest, current) => {
+			return current.receivedAt < longest.receivedAt ? current : longest;
+		});
+	}
+
+	return {
+		totalEverHeld: allRankRecords.length,
+		currentlyHolding: activeRecords.length,
+		totalWhoLeft: inactiveRecords.length,
+		averageTimeInRank: Math.floor(averageTimeInRank / (1000 * 60 * 60 * 24)), // days
+		longestServing: longestServing ? {
+			user: longestServing.user,
+			timeInRank: longestServing.getFormattedDuration(),
+			since: longestServing.receivedAt
+		} : null
+	};
 }
