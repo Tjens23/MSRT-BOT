@@ -7,7 +7,12 @@ import {
 	TextInputStyle, 
 	ActionRowBuilder,
 	ModalSubmitInteraction,
-	EmbedBuilder
+	EmbedBuilder,
+	ButtonStyle,
+	ButtonBuilder,
+	AttachmentBuilder,
+	TextChannel,
+	Message
 } from 'discord.js';
 import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
@@ -310,6 +315,19 @@ async function createTicketChannel(
 
 	// Create and send embed with ticket information
 	if (ticketType === TIcketTypes.ENLISTMENT && enlistmentData) {
+		const transcriptButton = new ButtonBuilder()
+			.setCustomId(`transcript_${ticket.id}`)
+			.setLabel('📜 View Transcript')
+			.setStyle(ButtonStyle.Primary);
+
+		const CloseTicketButton = new ButtonBuilder()
+			.setCustomId(`close_${ticket.id}`)
+			.setLabel('🔒 Close Ticket')
+		.setStyle(ButtonStyle.Danger);
+
+		const actionRow = new ActionRowBuilder<ButtonBuilder>()
+			.addComponents(transcriptButton, CloseTicketButton);
+
 		const enlistmentEmbed = new EmbedBuilder()
 			.setColor('#00ff00')
 			.setTitle('🪖 MSRT Enlistment Application')
@@ -330,7 +348,8 @@ async function createTicketChannel(
 
 		await channel.send({ 
 			content: `<@${interaction.user.id}> Your enlistment application has been submitted!`,
-			embeds: [enlistmentEmbed]
+			embeds: [enlistmentEmbed],
+			components: [actionRow]
 		});
 
 		// Send additional instructions
@@ -344,6 +363,19 @@ async function createTicketChannel(
 		});
 	} else {
 		// For other ticket types, send a simpler embed
+		const transcriptButton = new ButtonBuilder()
+			.setCustomId(`transcript_${ticket.id}`)
+			.setLabel('📜 View Transcript')
+			.setStyle(ButtonStyle.Primary);
+
+		const closeTicketButton = new ButtonBuilder()
+			.setCustomId(`close_${ticket.id}`)
+			.setLabel('🔒 Close Ticket')
+			.setStyle(ButtonStyle.Danger);
+
+		const actionRow = new ActionRowBuilder<ButtonBuilder>()
+			.addComponents(transcriptButton, closeTicketButton);
+
 		const ticketTypeName = Object.keys(TIcketTypes)[Object.values(TIcketTypes).indexOf(ticketType)];
 		const ticketEmbed = new EmbedBuilder()
 			.setColor('#0099ff')
@@ -363,7 +395,8 @@ async function createTicketChannel(
 
 		await channel.send({ 
 			content: `<@${interaction.user.id}> Your ticket has been created!`,
-			embeds: [ticketEmbed]
+			embeds: [ticketEmbed],
+			components: [actionRow]
 		});
 	}
 
@@ -501,4 +534,265 @@ export async function getRankStatistics(roleId: string) {
 			since: longestServing.receivedAt
 		} : null
 	};
+}
+
+/**
+ * Handle transcript button interaction
+ * @param interaction - Button interaction
+ */
+export async function handleTranscriptButton(interaction: ButtonInteraction) {
+	if (!interaction.guild || !interaction.channel) {
+		return interaction.reply({ content: 'This command can only be used in a server channel.', ephemeral: true });
+	}
+
+	// Extract ticket ID from custom ID
+	const ticketId = parseInt(interaction.customId.split('_')[1]);
+	
+	if (!ticketId) {
+		return interaction.reply({ content: 'Invalid ticket ID.', ephemeral: true });
+	}
+
+	// Defer the reply to prevent timeout
+	await interaction.deferReply({ ephemeral: true });
+
+	try {
+		// Find the ticket in database
+		const ticket = await Ticket.findOne({
+			where: { id: ticketId },
+			relations: ['user']
+		});
+
+		if (!ticket) {
+			return interaction.editReply({ content: 'Ticket not found.' });
+		}
+
+		// Get all messages from the channel
+		const channel = interaction.channel as TextChannel;
+		const messages: Message[] = [];
+
+		try {
+			// Fetch recent messages (Discord API limit)
+			const fetchedMessages = await channel.messages.fetch({ limit: 100 });
+			messages.push(...fetchedMessages.values());
+		} catch (error) {
+			console.error('Error fetching messages:', error);
+		}
+
+		// Sort messages by creation time (oldest first)
+		messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+
+		// Create transcript content
+		let transcript = `TICKET TRANSCRIPT\n`;
+		transcript += `=================\n`;
+		transcript += `Ticket ID: ${ticket.id}\n`;
+		transcript += `Ticket Type: ${ticket.ticketType}\n`;
+		transcript += `User: ${ticket.user.username} (${ticket.user.userId})\n`;
+		transcript += `Channel: #${channel.name}\n`;
+		transcript += `Created: ${new Date().toISOString()}\n`;
+		transcript += `=================\n\n`;
+
+		for (const message of messages) {
+			const timestamp = new Date(message.createdTimestamp).toISOString();
+			const author = message.author.username;
+			const content = message.content || '[No content]';
+			
+			transcript += `[${timestamp}] ${author}: ${content}\n`;
+			
+			// Add embed information if present
+			if (message.embeds.length > 0) {
+				for (const embed of message.embeds) {
+					transcript += `  [EMBED] Title: ${embed.title || 'No title'}\n`;
+					transcript += `  [EMBED] Description: ${embed.description || 'No description'}\n`;
+				}
+			}
+			
+			// Add attachment information if present
+			if (message.attachments.size > 0) {
+				for (const attachment of message.attachments.values()) {
+					transcript += `  [ATTACHMENT] ${attachment.name} (${attachment.url})\n`;
+				}
+			}
+			
+			transcript += '\n';
+		}
+
+		// Create attachment
+		const buffer = Buffer.from(transcript, 'utf-8');
+		const attachment = new AttachmentBuilder(buffer, {
+			name: `ticket-${ticket.id}-transcript.txt`
+		});
+
+		// Send transcript
+		await interaction.editReply({
+			content: `📜 Transcript generated for Ticket #${ticket.id}`,
+			files: [attachment]
+		});
+
+		return; // Success path
+
+	} catch (error) {
+		console.error('Error generating transcript:', error);
+		return interaction.editReply({ content: 'An error occurred while generating the transcript.' });
+	}
+}
+
+/**
+ * Handle close ticket button interaction
+ * @param interaction - Button interaction
+ */
+export async function handleCloseTicketButton(interaction: ButtonInteraction) {
+	if (!interaction.guild || !interaction.channel) {
+		return interaction.reply({ content: 'This command can only be used in a server channel.', ephemeral: true });
+	}
+
+	// Extract ticket ID from custom ID
+	const ticketId = parseInt(interaction.customId.split('_')[1]);
+	
+	if (!ticketId) {
+		return interaction.reply({ content: 'Invalid ticket ID.', ephemeral: true });
+	}
+
+	// Defer the reply to prevent timeout
+	await interaction.deferReply({ ephemeral: true });
+
+	try {
+		// Find the ticket in database
+		const ticket = await Ticket.findOne({
+			where: { id: ticketId },
+			relations: ['user']
+		});
+
+		if (!ticket) {
+			return interaction.editReply({ content: 'Ticket not found.' });
+		}
+
+		// Check if user has permission to close the ticket
+		const isTicketOwner = ticket.user.userId === interaction.user.id;
+		const hasStaffPermission = interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels);
+
+		if (!isTicketOwner && !hasStaffPermission) {
+			return interaction.editReply({ 
+				content: 'You do not have permission to close this ticket. Only the ticket owner or staff members can close tickets.' 
+			});
+		}
+
+		// Mark ticket as closed in database
+		ticket.closed = true;
+		await ticket.save();
+
+		// Create closed ticket embed with delete button
+		const deleteButton = new ButtonBuilder()
+			.setCustomId(`delete_${ticket.id}`)
+			.setLabel('🗑️ Delete Channel')
+			.setStyle(ButtonStyle.Danger);
+
+		const deleteActionRow = new ActionRowBuilder<ButtonBuilder>()
+			.addComponents(deleteButton);
+
+		const closedEmbed = new EmbedBuilder()
+			.setColor('#ff0000')
+			.setTitle('🔒 Ticket Closed')
+			.setDescription(`This ticket has been closed by <@${interaction.user.id}>`)
+			.addFields(
+				{ name: '📋 Ticket ID', value: ticket.id.toString(), inline: true },
+				{ name: '👤 Original User', value: `<@${ticket.user.userId}>`, inline: true },
+				{ name: '📅 Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+			)
+			.setTimestamp()
+			.setFooter({ 
+				text: `Closed by ${interaction.user.username} • Channel will auto-delete in 5 minutes`,
+				iconURL: interaction.user.displayAvatarURL()
+			});
+
+		// Update channel with closed status and delete button
+		const channel = interaction.channel as TextChannel;
+		await channel.send({ 
+			embeds: [closedEmbed],
+			components: [deleteActionRow]
+		});
+
+		// Rename channel to indicate it's closed
+		try {
+			await channel.setName(`closed-${channel.name.replace('ticket-', '')}`);
+		} catch (error) {
+			console.error('Error renaming channel:', error);
+		}
+
+		// Remove permissions for the ticket owner (but keep for staff)
+		try {
+			await channel.permissionOverwrites.edit(ticket.user.userId, {
+				ViewChannel: false,
+				SendMessages: false
+			});
+		} catch (error) {
+			console.error('Error updating permissions:', error);
+		}
+
+		await interaction.editReply({ 
+			content: `✅ Ticket #${ticket.id} has been closed successfully.` 
+		});
+
+		// Auto-delete channel after 5 minutes (gives time for manual deletion or transcript generation)
+		setTimeout(async () => {
+			try {
+				// Check if the channel still exists and is accessible
+				const channelToDelete = await interaction.guild?.channels.fetch(channel.id).catch(() => null);
+				
+				if (channelToDelete) {
+					await channelToDelete.delete();
+					console.log(`Auto-deleted closed ticket channel: ${channel.name} (Ticket #${ticket.id})`);
+				}
+			} catch (error: any) {
+				// Only log if it's not a "Unknown Channel" error (channel already deleted)
+				if (error.code !== 10003) {
+					console.error(`Error auto-deleting channel ${channel.name}:`, error.message);
+				}
+			}
+		}, 300000); // Delete after 5 minutes (300,000ms)
+
+		return; // Success path
+
+	} catch (error) {
+		console.error('Error closing ticket:', error);
+		return interaction.editReply({ content: 'An error occurred while closing the ticket.' });
+	}
+}
+
+/**
+ * Handle delete channel button interaction
+ * @param interaction - Button interaction
+ */
+export async function handleDeleteChannelButton(interaction: ButtonInteraction) {
+	if (!interaction.guild || !interaction.channel) {
+		return interaction.reply({ content: 'This command can only be used in a server channel.', ephemeral: true });
+	}
+
+	// Check if user has permission to delete the channel
+	const hasStaffPermission = interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels);
+
+	if (!hasStaffPermission) {
+		return interaction.reply({ 
+			content: 'You do not have permission to delete this channel. Only staff members with "Manage Channels" permission can delete ticket channels.', 
+			ephemeral: true 
+		});
+	}
+
+	// Confirm deletion
+	await interaction.reply({
+		content: '🗑️ Deleting this ticket channel in 3 seconds...',
+		ephemeral: true
+	});
+
+	// Delete channel after a short delay
+	setTimeout(async () => {
+		try {
+			const channel = interaction.channel as TextChannel;
+			await channel.delete();
+			console.log(`Manually deleted ticket channel: ${channel.name}`);
+		} catch (error: any) {
+			console.error('Error manually deleting channel:', error.message);
+		}
+	}, 3000); // 3 seconds delay
+
+	return; // Function completes successfully
 }
