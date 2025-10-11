@@ -1,0 +1,369 @@
+---
+# Namespace for the MSRT Bot application
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: msrt-bot
+    labels:
+        name: msrt-bot
+        app: discord-bot
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: msrt-bot-config
+    namespace: msrt-bot
+    labels:
+        app: msrt-bot
+data:
+    NODE_ENV: 'production'
+    # Add any other non-sensitive configuration here
+    LOG_LEVEL: 'info'
+
+---
+# Secret for sensitive environment variables
+apiVersion: v1
+kind: Secret
+metadata:
+    name: msrt-bot-secrets
+    namespace: msrt-bot
+    labels:
+        app: msrt-bot
+type: Opaque
+stringData:
+    # Discord Bot Configuration
+    DISCORD_TOKEN: 'YOUR_DISCORD_TOKEN_HERE'
+    CLIENT_ID: 'YOUR_CLIENT_ID_HERE'
+    GUILD_ID: 'YOUR_GUILD_ID_HERE'
+
+    # Database Configuration
+    DB_HOST: 'postgres-service'
+    DB_PORT: '5432'
+    DB_NAME: 'msrt_bot'
+    DB_USERNAME: 'msrt_user'
+    DB_PASSWORD: 'YOUR_DB_PASSWORD_HERE'
+
+    # Additional secrets as needed
+    # GOOGLE_API_KEY: "YOUR_GOOGLE_API_KEY_HERE"
+
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+    name: postgres
+    namespace: msrt-bot
+    labels:
+        app: postgres
+spec:
+    serviceName: postgres-service
+    replicas: 1
+    selector:
+        matchLabels:
+            app: postgres
+    template:
+        metadata:
+            labels:
+                app: postgres
+        spec:
+            containers:
+                - name: postgres
+                  image: postgres:15-alpine
+                  ports:
+                      - containerPort: 5432
+                        name: postgres
+                  env:
+                      - name: POSTGRES_DB
+                        value: 'msrt_bot'
+                      - name: POSTGRES_USER
+                        value: 'msrt_user'
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_PASSWORD
+                      - name: PGDATA
+                        value: /var/lib/postgresql/data/pgdata
+                  volumeMounts:
+                      - name: postgres-storage
+                        mountPath: /var/lib/postgresql/data
+                  resources:
+                      requests:
+                          memory: '256Mi'
+                          cpu: '250m'
+                      limits:
+                          memory: '512Mi'
+                          cpu: '500m'
+                  livenessProbe:
+                      exec:
+                          command:
+                              - pg_isready
+                              - -U
+                              - msrt_user
+                              - -d
+                              - msrt_bot
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+                  readinessProbe:
+                      exec:
+                          command:
+                              - pg_isready
+                              - -U
+                              - msrt_user
+                              - -d
+                              - msrt_bot
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+    volumeClaimTemplates:
+        - metadata:
+              name: postgres-storage
+          spec:
+              accessModes: ['ReadWriteOnce']
+              resources:
+                  requests:
+                      storage: 10Gi
+              # storageClassName: "your-storage-class" # Uncomment and specify your storage class
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+    name: postgres-service
+    namespace: msrt-bot
+    labels:
+        app: postgres
+spec:
+    type: ClusterIP
+    ports:
+        - port: 5432
+          targetPort: 5432
+          protocol: TCP
+          name: postgres
+    selector:
+        app: postgres
+
+---
+# MSRT Bot Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: msrt-bot
+    namespace: msrt-bot
+    labels:
+        app: msrt-bot
+spec:
+    replicas: 1 # Discord bots should only have 1 replica to avoid conflicts
+    strategy:
+        type: Recreate # Ensure only one instance runs at a time
+    selector:
+        matchLabels:
+            app: msrt-bot
+    template:
+        metadata:
+            labels:
+                app: msrt-bot
+        spec:
+            restartPolicy: Always
+            containers:
+                - name: msrt-bot
+                  image: tjens23/msrtbot:latest
+                  imagePullPolicy: Always
+                  env:
+                      # Non-sensitive config from ConfigMap
+                      - name: NODE_ENV
+                        valueFrom:
+                            configMapKeyRef:
+                                name: msrt-bot-config
+                                key: NODE_ENV
+                      - name: LOG_LEVEL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: msrt-bot-config
+                                key: LOG_LEVEL
+
+                      # Sensitive config from Secret
+                      - name: DISCORD_TOKEN
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DISCORD_TOKEN
+                      - name: CLIENT_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: CLIENT_ID
+                      - name: GUILD_ID
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: GUILD_ID
+                      - name: DB_HOST
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_HOST
+                      - name: DB_PORT
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_PORT
+                      - name: DB_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_NAME
+                      - name: DB_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_USERNAME
+                      - name: DB_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_PASSWORD
+
+                  resources:
+                      requests:
+                          memory: '256Mi'
+                          cpu: '250m'
+                      limits:
+                          memory: '512Mi'
+                          cpu: '500m'
+
+                  # Health checks
+                  livenessProbe:
+                      exec:
+                          command:
+                              - /bin/sh
+                              - -c
+                              - "ps aux | grep '[n]ode' || exit 1"
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+                      timeoutSeconds: 5
+                      failureThreshold: 3
+
+                  readinessProbe:
+                      exec:
+                          command:
+                              - /bin/sh
+                              - -c
+                              - "ps aux | grep '[n]ode' || exit 1"
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+                      timeoutSeconds: 5
+                      failureThreshold: 3
+
+                  # Security context
+                  securityContext:
+                      runAsNonRoot: true
+                      runAsUser: 1001
+                      runAsGroup: 1001
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: false
+                      capabilities:
+                          drop:
+                              - ALL
+
+            # Init container to wait for database
+            initContainers:
+                - name: wait-for-db
+                  image: postgres:15-alpine
+                  command:
+                      - /bin/sh
+                      - -c
+                      - |
+                          until pg_isready -h postgres-service -p 5432 -U msrt_user; do
+                            echo "Waiting for database to be ready..."
+                            sleep 2
+                          done
+                          echo "Database is ready!"
+                  env:
+                      - name: PGPASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: msrt-bot-secrets
+                                key: DB_PASSWORD
+
+---
+# Service for the bot (optional, mainly for monitoring)
+apiVersion: v1
+kind: Service
+metadata:
+    name: msrt-bot-service
+    namespace: msrt-bot
+    labels:
+        app: msrt-bot
+spec:
+    type: ClusterIP
+    ports:
+        - port: 3000
+          targetPort: 3000
+          protocol: TCP
+          name: http
+    selector:
+        app: msrt-bot
+
+---
+# HorizontalPodAutoscaler (optional, not recommended for Discord bots)
+# Uncomment only if you need scaling based on metrics other than replicas
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: msrt-bot-hpa
+#   namespace: msrt-bot
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: msrt-bot
+#   minReplicas: 1
+#   maxReplicas: 1  # Keep at 1 for Discord bots
+#   metrics:
+#   - type: Resource
+#     resource:
+#       name: cpu
+#       target:
+#         type: Utilization
+#         averageUtilization: 80
+
+---
+# PodDisruptionBudget to ensure availability during cluster updates
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+    name: msrt-bot-pdb
+    namespace: msrt-bot
+spec:
+    minAvailable: 1
+    selector:
+        matchLabels:
+            app: msrt-bot
+
+---
+# NetworkPolicy for security (optional)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: msrt-bot-network-policy
+    namespace: msrt-bot
+spec:
+    podSelector:
+        matchLabels:
+            app: msrt-bot
+    policyTypes:
+        - Ingress
+        - Egress
+    ingress:
+        - from:
+              - namespaceSelector:
+                    matchLabels:
+                        name: monitoring # Allow monitoring namespace
+          ports:
+              - protocol: TCP
+                port: 3000
+    egress:
+        - {} # Allow all outbound traffic (needed for Discord API)

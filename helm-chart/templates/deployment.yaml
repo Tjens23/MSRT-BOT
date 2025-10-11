@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msrt-bot.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "msrt-bot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate  # Ensure only one instance runs at a time for Discord bots
+  selector:
+    matchLabels:
+      {{- include "msrt-bot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "msrt-bot.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Always
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      
+      {{- if and .Values.database.enabled .Values.initContainers.waitForDb.enabled }}
+      initContainers:
+      - name: wait-for-db
+        image: "{{ .Values.initContainers.waitForDb.image.repository }}:{{ .Values.initContainers.waitForDb.image.tag }}"
+        command:
+        - /bin/sh
+        - -c
+        - |
+          until pg_isready -h {{ include "msrt-bot.database.host" . }} -p {{ include "msrt-bot.database.port" . }} -U {{ include "msrt-bot.database.username" . }}; do
+            echo "Waiting for database to be ready..."
+            sleep 2
+          done
+          echo "Database is ready!"
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_PASSWORD
+      {{- end }}
+      
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.global.imageRegistry | default "docker.io" }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        
+        env:
+        # Non-sensitive config from ConfigMap
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-config
+              key: LOG_LEVEL
+        
+        # Sensitive config from Secret
+        - name: DISCORD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DISCORD_TOKEN
+        - name: CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: CLIENT_ID
+        - name: GUILD_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: GUILD_ID
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_NAME
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" . }}-secrets
+              key: DB_PASSWORD
+        
+        {{- range .Values.extraEnvVars }}
+        - name: {{ .name }}
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "msrt-bot.fullname" $ }}-config
+              key: {{ .name }}
+        {{- end }}
+        
+        {{- range $key, $value := .Values.extraSecrets }}
+        - name: {{ $key }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "msrt-bot.fullname" $ }}-secrets
+              key: {{ $key }}
+        {{- end }}
+        
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        
+        {{- if .Values.healthChecks.enabled }}
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep '[n]ode' || exit 1"
+          initialDelaySeconds: {{ .Values.healthChecks.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthChecks.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthChecks.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthChecks.livenessProbe.failureThreshold }}
+        
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep '[n]ode' || exit 1"
+          initialDelaySeconds: {{ .Values.healthChecks.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthChecks.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthChecks.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthChecks.readinessProbe.failureThreshold }}
+        {{- end }}

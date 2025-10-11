@@ -1,0 +1,77 @@
+{{- if .Values.database.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "msrt-bot.fullname" . }}-postgres
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "msrt-bot.database.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "msrt-bot.database.serviceName" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "msrt-bot.database.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "msrt-bot.database.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: postgres
+        image: "{{ .Values.database.postgres.image.repository }}:{{ .Values.database.postgres.image.tag }}"
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.database.postgres.auth.database | quote }}
+        - name: POSTGRES_USER
+          value: {{ .Values.database.postgres.auth.username | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.database.postgres.auth.password | quote }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          {{- toYaml .Values.database.postgres.resources | nindent 10 }}
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.database.postgres.auth.username }}
+            - -d
+            - {{ .Values.database.postgres.auth.database }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.database.postgres.auth.username }}
+            - -d
+            - {{ .Values.database.postgres.auth.database }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+  {{- if .Values.database.postgres.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      {{- if or .Values.database.postgres.persistence.storageClass .Values.global.storageClass }}
+      storageClassName: {{ .Values.database.postgres.persistence.storageClass | default .Values.global.storageClass | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.database.postgres.persistence.size | quote }}
+  {{- else }}
+  volumes:
+  - name: postgres-storage
+    emptyDir: {}
+  {{- end }}
+{{- end }}
