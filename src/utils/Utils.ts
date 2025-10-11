@@ -10,16 +10,14 @@ import {
 	EmbedBuilder,
 	ButtonStyle,
 	ButtonBuilder,
-	AttachmentBuilder,
-	TextChannel,
-	Message
+	TextChannel
 } from 'discord.js';
 import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
 import HRTicket from '../database/entities/HRTicket';
 import LOATicket from '../database/entities/LOATicket';
-import { TIcketTypes } from './enums/TicketTypes';
+import { TicketTypes } from './enums/TicketTypes';
 import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { database } from '../database';
 
@@ -46,22 +44,18 @@ export const capitalise = (string: any) => {
 		.join(' ');
 };
 
-
-
-
-
 const TICKET_TYPE_MAP = {
-	ticket_enlistment: TIcketTypes.ENLISTMENT,
-	ticket_staff: TIcketTypes.STAFF,
-	ticket_loa: TIcketTypes.LOA,
-	ticket_hr: TIcketTypes.HR
-};
+	ticket_enlistment: TicketTypes.ENLISTMENT,
+	ticket_staff: TicketTypes.STAFF,
+	ticket_loa: TicketTypes.LOA,
+	ticket_hr: TicketTypes.HR
+} as const;
 
 export async function handleButton(interaction: ButtonInteraction) {
 	const typeKey = interaction.customId;
-	const ticketType = TICKET_TYPE_MAP[typeKey as keyof typeof TICKET_TYPE_MAP];
+	const ticketType = TICKET_TYPE_MAP[typeKey as keyof typeof TICKET_TYPE_MAP] as TicketTypes | undefined;
 
-	if (!ticketType) {
+	if (ticketType === undefined) {
 		return interaction.reply({ content: 'Invalid ticket type.', ephemeral: true });
 	}
 
@@ -69,67 +63,112 @@ export async function handleButton(interaction: ButtonInteraction) {
 		return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
 	}
 
-	// If it's an enlistment ticket, show modal first
-	if (ticketType === TIcketTypes.ENLISTMENT) {
-		const modal = new ModalBuilder()
-			.setCustomId('enlistment_modal')
-			.setTitle('MSRT Enlistment Application');
+	// Handle different ticket types with modals
+	switch (ticketType) {
+		case TicketTypes.ENLISTMENT: {
+			const modal = new ModalBuilder()
+				.setCustomId('enlistment_modal')
+				.setTitle('MSRT Enlistment Application');
 
-		// Callsign input
-		const callsignInput = new TextInputBuilder()
-			.setCustomId('callsign')
-			.setLabel('What would be your callsign?')
-			.setStyle(TextInputStyle.Short)
-			.setRequired(true)
-			.setMaxLength(50);
+			// Callsign input
+			const callsignInput = new TextInputBuilder()
+				.setCustomId('callsign')
+				.setLabel('What would be your callsign?')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(50);
 
-		// Age input
-		const ageInput = new TextInputBuilder()
-			.setCustomId('age')
-			.setLabel('How old are you?')
-			.setStyle(TextInputStyle.Short)
-			.setRequired(true)
-			.setMaxLength(3);
+			// Age input
+			const ageInput = new TextInputBuilder()
+				.setCustomId('age')
+				.setLabel('How old are you?')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(3);
 
-		// Timezone input
-		const timezoneInput = new TextInputBuilder()
-			.setCustomId('timezone')
-			.setLabel('What timezone are you in?')
-			.setStyle(TextInputStyle.Short)
-			.setRequired(true)
-			.setMaxLength(50)
-			.setPlaceholder('e.g., EST, PST, GMT+1, etc.');
+			// Timezone input
+			const timezoneInput = new TextInputBuilder()
+				.setCustomId('timezone')
+				.setLabel('What timezone are you in?')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(50)
+				.setPlaceholder('e.g., EST, PST, GMT+1, etc.');
 
-		// How they found MSRT
-		const foundOutInput = new TextInputBuilder()
-			.setCustomId('found_out')
-			.setLabel('Where did you find out about MSRT?')
-			.setStyle(TextInputStyle.Paragraph)
-			.setRequired(true)
-			.setMaxLength(500);
+			// How they found MSRT
+			const foundOutInput = new TextInputBuilder()
+				.setCustomId('found_out')
+				.setLabel('Where did you find out about MSRT?')
+				.setStyle(TextInputStyle.Paragraph)
+				.setRequired(true)
+				.setMaxLength(500);
 
-		// Game preference
-		const gameInput = new TextInputBuilder()
-			.setCustomId('game')
-			.setLabel('"Ready or Not" or "Ground Branch"?')
-			.setStyle(TextInputStyle.Short)
-			.setRequired(true)
-			.setMaxLength(50);
+			// Game preference
+			const gameInput = new TextInputBuilder()
+				.setCustomId('game')
+				.setLabel('"Ready or Not" or "Ground Branch"?')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(50);
 
-		// Create action rows for each input
-		const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(callsignInput);
-		const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(ageInput);
-		const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(timezoneInput);
-		const fourthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(foundOutInput);
-		const fifthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(gameInput);
+			// Create action rows for each input
+			const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(callsignInput);
+			const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(ageInput);
+			const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(timezoneInput);
+			const fourthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(foundOutInput);
+			const fifthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(gameInput);
 
-		modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow, fifthActionRow);
+			modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow, fifthActionRow);
 
-		return await interaction.showModal(modal);
+			return await interaction.showModal(modal);
+		}
+
+		case TicketTypes.LOA: {
+			const modal = new ModalBuilder()
+				.setCustomId('loa_modal')
+				.setTitle('MSRT Leave of Absence Request');
+
+			// Start date input
+			const startDateInput = new TextInputBuilder()
+				.setCustomId('start_date')
+				.setLabel('Start Date of LOA (YYYY-MM-DD)')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(10)
+				.setPlaceholder('e.g., 2025-09-22');
+
+			// End date input
+			const endDateInput = new TextInputBuilder()
+				.setCustomId('end_date')
+				.setLabel('End Date of LOA (YYYY-MM-DD)')
+				.setStyle(TextInputStyle.Short)
+				.setRequired(true)
+				.setMaxLength(10)
+				.setPlaceholder('e.g., 2025-09-30');
+
+			// Reason input
+			const reasonInput = new TextInputBuilder()
+				.setCustomId('reason')
+				.setLabel('Reason for Leave of Absence')
+				.setStyle(TextInputStyle.Paragraph)
+				.setRequired(true)
+				.setMaxLength(500)
+				.setPlaceholder('Please provide the reason for your LOA...');
+
+			// Create action rows for each input
+			const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(startDateInput);
+			const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(endDateInput);
+			const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(reasonInput);
+
+			modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+
+			return await interaction.showModal(modal);
+		}
+
+		default:
+			// For other ticket types, proceed with original logic
+			return await createTicketChannel(interaction, ticketType);
 	}
-
-	// For other ticket types, proceed with original logic
-	return await createTicketChannel(interaction, ticketType);
 }
 
 export async function handleEnlistmentModal(interaction: ModalSubmitInteraction) {
@@ -145,7 +184,7 @@ export async function handleEnlistmentModal(interaction: ModalSubmitInteraction)
 	const game = interaction.fields.getTextInputValue('game');
 
 	// Create the ticket channel
-	return await createTicketChannel(interaction, TIcketTypes.ENLISTMENT, {
+	return await createTicketChannel(interaction, TicketTypes.ENLISTMENT, {
 		callsign,
 		age,
 		timezone,
@@ -154,15 +193,36 @@ export async function handleEnlistmentModal(interaction: ModalSubmitInteraction)
 	});
 }
 
+export async function handleLOAModal(interaction: ModalSubmitInteraction) {
+	if (!interaction.guild) {
+		return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+	}
+
+	// Get the form data
+	const startDate = interaction.fields.getTextInputValue('start_date');
+	const endDate = interaction.fields.getTextInputValue('end_date');
+	const reason = interaction.fields.getTextInputValue('reason');
+
+	// Create the ticket channel
+	return await createTicketChannel(interaction, TicketTypes.LOA, {
+		startDate,
+		endDate,
+		reason
+	});
+}
+
 async function createTicketChannel(
 	interaction: ButtonInteraction | ModalSubmitInteraction, 
-	ticketType: TIcketTypes,
-	enlistmentData?: {
-		callsign: string;
-		age: string;
-		timezone: string;
-		foundOut: string;
-		game: string;
+	ticketType: TicketTypes,
+	data?: {
+		callsign?: string;
+		age?: string;
+		timezone?: string;
+		foundOut?: string;
+		game?: string;
+		startDate?: string;
+		endDate?: string;
+		reason?: string;
 	}
 ) {
 	if (!interaction.guild) {
@@ -229,12 +289,12 @@ async function createTicketChannel(
 		user = User.create({
 			userId: interaction.user.id,
 			username: interaction.user.username,
-			callsign: enlistmentData?.callsign || interaction.user.username
+			callsign: data?.callsign || interaction.user.username
 		});
 		await user.save();
-	} else if (enlistmentData?.callsign) {
+	} else if (data?.callsign) {
 		// Update callsign if provided in modal
-		user.callsign = enlistmentData.callsign;
+		user.callsign = data.callsign;
 		await user.save();
 	}
 
@@ -244,8 +304,8 @@ async function createTicketChannel(
 	);
 
 	if (existingTicket) {
-		const ticketTypeName = Object.keys(TIcketTypes)[Object.values(TIcketTypes).indexOf(ticketType)];
-		return interaction.editReply({ 
+		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
+		return interaction.editReply({
 			content: `❌ You already have an open ${ticketTypeName.toLowerCase()} ticket. Please close your existing ticket before creating a new one.`
 		});
 	}
@@ -254,53 +314,76 @@ async function createTicketChannel(
 	let ticket: Ticket;
 
 	switch (ticketType) {
-		case TIcketTypes.ENLISTMENT:
+		case TicketTypes.ENLISTMENT:
 			const enlistment = new EnlistmentTicket();
 			enlistment.user = user;
-			enlistment.ticketType = TIcketTypes.ENLISTMENT;
+			enlistment.ticketType = TicketTypes.ENLISTMENT;
 			enlistment.closed = false;
-			enlistment.title = `Enlistment Ticket - ${enlistmentData?.callsign || interaction.user.username}`;
-			enlistment.description = enlistmentData ? 
-				`**Age:** ${enlistmentData.age}\n**Timezone:** ${enlistmentData.timezone}\n**Found MSRT through:** ${enlistmentData.foundOut}\n**Game Preference:** ${enlistmentData.game}` :
+			enlistment.title = `Enlistment Ticket - ${data?.callsign || interaction.user.username}`;
+			enlistment.description = data ?
+				`**Age:** ${data.age}\n**Timezone:** ${data.timezone}\n**Found MSRT through:** ${data.foundOut}\n**Game Preference:** ${data.game}` :
 				'New enlistment request';
-			enlistment.timezone = enlistmentData?.timezone || 'Unknown';
-			enlistment.game = enlistmentData?.game || 'Unknown';
+			enlistment.timezone = data?.timezone || 'Unknown';
+			enlistment.game = data?.game || 'Unknown';
 			ticket = enlistment;
 			break;
-		case TIcketTypes.HR:
+
+		case TicketTypes.LOA:
+			const loaTicket = new LOATicket();
+			loaTicket.user = user;
+			loaTicket.ticketType = TicketTypes.LOA;
+			loaTicket.closed = false;
+			loaTicket.title = `LOA Ticket - ${interaction.user.username}`;
+			loaTicket.description = data?.reason || 'New LOA request';
+
+			// Parse and set dates from modal data
+			if (data?.startDate) {
+				try {
+					loaTicket.startDate = new Date(data.startDate);
+				} catch (error) {
+					console.error('Error parsing start date:', error);
+					loaTicket.startDate = new Date();
+				}
+			} else {
+				loaTicket.startDate = new Date();
+			}
+
+			if (data?.endDate) {
+				try {
+					loaTicket.endDate = new Date(data.endDate);
+				} catch (error) {
+					console.error('Error parsing end date:', error);
+					loaTicket.endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default 1 week
+				}
+			} else {
+				loaTicket.endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default 1 week
+			}
+
+			loaTicket.reason = data?.reason || 'Unknown';
+			ticket = loaTicket;
+			break;
+
+		case TicketTypes.HR:
 			const hrTicket = new HRTicket();
 			hrTicket.user = user;
-			hrTicket.ticketType = TIcketTypes.HR;
+			hrTicket.ticketType = TicketTypes.HR;
 			hrTicket.closed = false;
 			hrTicket.title = `HR Ticket - ${interaction.user.username}`;
 			hrTicket.description = 'New HR request';
-			hrTicket.reason = 'Unknown'; // Update later via modal or form
+			hrTicket.reason = 'Unknown';
 			ticket = hrTicket;
 			break;
 
-		case TIcketTypes.LOA:
-			const loaTicket = new LOATicket();
-			loaTicket.user = user;
-			loaTicket.ticketType = TIcketTypes.LOA;
-			loaTicket.closed = false;
-			loaTicket.title = `LOA Ticket - ${interaction.user.username}`;
-			loaTicket.description = 'New LOA request';
-			// Set default dates (user can update later)
-			loaTicket.startDate = new Date();
-			loaTicket.endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default 1 week
-			loaTicket.reason = 'Unknown'; // Update later via modal or form
-			ticket = loaTicket;
-			break;
-		case TIcketTypes.STAFF:
+		case TicketTypes.STAFF:
 			const staffTicket = new Ticket();
 			staffTicket.user = user;
-			staffTicket.ticketType = TIcketTypes.STAFF;
+			staffTicket.ticketType = TicketTypes.STAFF;
 			staffTicket.closed = false;
 			staffTicket.title = `Staff Ticket - ${interaction.user.username}`;
 			staffTicket.description = 'New staff request';
 			ticket = staffTicket;
 			break;
-		// Optional: other ticket subclasses
+
 		default:
 			ticket = Ticket.create({
 				user,
@@ -314,7 +397,7 @@ async function createTicketChannel(
 	await ticket.save();
 
 	// Create and send embed with ticket information
-	if (ticketType === TIcketTypes.ENLISTMENT && enlistmentData) {
+	if (ticketType === TicketTypes.ENLISTMENT && data?.callsign && data?.age && data?.timezone && data?.foundOut && data?.game) {
 		const transcriptButton = new ButtonBuilder()
 			.setCustomId(`transcript_${ticket.id}`)
 			.setLabel('📜 View Transcript')
@@ -331,13 +414,13 @@ async function createTicketChannel(
 		const enlistmentEmbed = new EmbedBuilder()
 			.setColor('#00ff00')
 			.setTitle('🪖 MSRT Enlistment Application')
-			.setDescription(`Welcome to your enlistment ticket, **${enlistmentData.callsign}**!`)
+			.setDescription(`Welcome to your enlistment ticket, **${data.callsign}**!`)
 			.addFields(
-				{ name: '👤 Callsign', value: enlistmentData.callsign, inline: true },
-				{ name: '🎂 Age', value: enlistmentData.age, inline: true },
-				{ name: '🌍 Timezone', value: enlistmentData.timezone, inline: true },
-				{ name: '🔍 Found MSRT through', value: enlistmentData.foundOut, inline: false },
-				{ name: '🎮 Game Preference', value: enlistmentData.game, inline: true }
+				{ name: '👤 Callsign', value: data.callsign, inline: true },
+				{ name: '🎂 Age', value: data.age, inline: true },
+				{ name: '🌍 Timezone', value: data.timezone, inline: true },
+				{ name: '🔍 Found MSRT through', value: data.foundOut, inline: false },
+				{ name: '🎮 Game Preference', value: data.game, inline: true }
 			)
 			.setThumbnail(interaction.user.displayAvatarURL())
 			.setTimestamp()
@@ -361,6 +444,58 @@ async function createTicketChannel(
 				`• Do not create additional tickets for the same purpose\n\n` +
 				`Thank you for your interest in joining MSRT! 🎖️`
 		});
+	} else if (ticketType === TicketTypes.LOA && data?.reason && data?.startDate && data?.endDate) {
+		// Create LOA-specific embed
+		const transcriptButton = new ButtonBuilder()
+			.setCustomId(`transcript_${ticket.id}`)
+			.setLabel('📜 View Transcript')
+			.setStyle(ButtonStyle.Primary);
+
+		const closeTicketButton = new ButtonBuilder()
+			.setCustomId(`close_${ticket.id}`)
+			.setLabel('🔒 Close Ticket')
+			.setStyle(ButtonStyle.Danger);
+
+		const actionRow = new ActionRowBuilder<ButtonBuilder>()
+			.addComponents(transcriptButton, closeTicketButton);
+
+		// Calculate duration with proper type checking
+		const startDate = data.startDate;
+		const endDate = data.endDate;
+		const durationDays = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+
+		const loaEmbed = new EmbedBuilder()
+			.setColor('#ffa500')
+			.setTitle('🏖️ MSRT Leave of Absence Request')
+			.setDescription(`Your LOA request has been submitted, **${interaction.user.username}**!`)
+			.addFields(
+				{ name: '📅 Start Date', value: startDate, inline: true },
+				{ name: '📅 End Date', value: endDate, inline: true },
+				{ name: '⏱️ Duration', value: `${durationDays} days`, inline: true },
+				{ name: '📝 Reason', value: data.reason, inline: false }
+			)
+			.setThumbnail(interaction.user.displayAvatarURL())
+			.setTimestamp()
+			.setFooter({
+				text: `Ticket ID: ${ticket.id} | User ID: ${interaction.user.id}`,
+				iconURL: interaction.guild?.iconURL() || undefined
+			});
+
+		await channel.send({
+			content: `<@${interaction.user.id}> Your Leave of Absence request has been submitted!`,
+			embeds: [loaEmbed],
+			components: [actionRow]
+		});
+
+		// Send additional instructions for LOA
+		await channel.send({
+			content: `📋 **LOA Request Information:**\n` +
+				`• Staff will review your request shortly\n` +
+				`• Please ensure your dates are accurate\n` +
+				`• You will be notified once your LOA is approved/denied\n` +
+				`• Keep this channel open until your request is processed\n\n` +
+				`**Note:** Your LOA will be effective from the approved start date. 📆`
+		});
 	} else {
 		// For other ticket types, send a simpler embed
 		const transcriptButton = new ButtonBuilder()
@@ -376,7 +511,7 @@ async function createTicketChannel(
 		const actionRow = new ActionRowBuilder<ButtonBuilder>()
 			.addComponents(transcriptButton, closeTicketButton);
 
-		const ticketTypeName = Object.keys(TIcketTypes)[Object.values(TIcketTypes).indexOf(ticketType)];
+		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
 		const ticketEmbed = new EmbedBuilder()
 			.setColor('#0099ff')
 			.setTitle(`🎫 ${ticketTypeName} Ticket Created`)
@@ -566,73 +701,98 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 			return interaction.editReply({ content: 'Ticket not found.' });
 		}
 
-		// Get all messages from the channel
+		// Generate a reliable text-based transcript (bypassing the problematic library)
 		const channel = interaction.channel as TextChannel;
-		const messages: Message[] = [];
 
-		try {
-			// Fetch recent messages (Discord API limit)
-			const fetchedMessages = await channel.messages.fetch({ limit: 100 });
-			messages.push(...fetchedMessages.values());
-		} catch (error) {
-			console.error('Error fetching messages:', error);
-		}
+		// Fetch messages from the channel
+		const messageCollection = await channel.messages.fetch({ limit: 100 });
+		const messages = Array.from(messageCollection.values()).reverse(); // Oldest first
 
-		// Sort messages by creation time (oldest first)
-		messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
-
-		// Create transcript content
-		let transcript = `TICKET TRANSCRIPT\n`;
-		transcript += `=================\n`;
-		transcript += `Ticket ID: ${ticket.id}\n`;
-		transcript += `Ticket Type: ${ticket.ticketType}\n`;
-		transcript += `User: ${ticket.user.username} (${ticket.user.userId})\n`;
-		transcript += `Channel: #${channel.name}\n`;
-		transcript += `Created: ${new Date().toISOString()}\n`;
-		transcript += `=================\n\n`;
+		let transcriptContent = `TICKET TRANSCRIPT\n`;
+		transcriptContent += `=================\n`;
+		transcriptContent += `Ticket ID: ${ticket.id}\n`;
+		transcriptContent += `Ticket Type: ${ticket.ticketType}\n`;
+		transcriptContent += `User: ${ticket.user.username} (${ticket.user.userId})\n`;
+		transcriptContent += `Channel: #${channel.name}\n`;
+		transcriptContent += `Generated: ${new Date().toISOString()}\n`;
+		transcriptContent += `Total Messages: ${messages.length}\n`;
+		transcriptContent += `=================\n\n`;
 
 		for (const message of messages) {
-			const timestamp = new Date(message.createdTimestamp).toISOString();
+			const timestamp = new Date(message.createdTimestamp).toLocaleString();
 			const author = message.author.username;
-			const content = message.content || '[No content]';
-			
-			transcript += `[${timestamp}] ${author}: ${content}\n`;
-			
+			const authorId = message.author.id;
+			const content = message.content || '[No text content]';
+
+			// Add message header
+			transcriptContent += `[${timestamp}] ${author} (${authorId})\n`;
+
+			// Add message content
+			if (content.trim()) {
+				transcriptContent += `${content}\n`;
+			}
+
 			// Add embed information if present
 			if (message.embeds.length > 0) {
+				transcriptContent += `--- EMBEDS ---\n`;
 				for (const embed of message.embeds) {
-					transcript += `  [EMBED] Title: ${embed.title || 'No title'}\n`;
-					transcript += `  [EMBED] Description: ${embed.description || 'No description'}\n`;
+					if (embed.title) transcriptContent += `Title: ${embed.title}\n`;
+					if (embed.description) transcriptContent += `Description: ${embed.description}\n`;
+					if (embed.fields && embed.fields.length > 0) {
+						embed.fields.forEach(field => {
+							transcriptContent += `${field.name}: ${field.value}\n`;
+						});
+					}
+					if (embed.footer) transcriptContent += `Footer: ${embed.footer.text}\n`;
 				}
+				transcriptContent += `--- END EMBEDS ---\n`;
 			}
-			
+
 			// Add attachment information if present
 			if (message.attachments.size > 0) {
+				transcriptContent += `--- ATTACHMENTS ---\n`;
 				for (const attachment of message.attachments.values()) {
-					transcript += `  [ATTACHMENT] ${attachment.name} (${attachment.url})\n`;
+					transcriptContent += `📎 ${attachment.name} (${attachment.size} bytes)\n`;
+					transcriptContent += `   URL: ${attachment.url}\n`;
 				}
+				transcriptContent += `--- END ATTACHMENTS ---\n`;
 			}
-			
-			transcript += '\n';
+
+			// Add reactions if present
+			if (message.reactions.cache.size > 0) {
+				transcriptContent += `--- REACTIONS ---\n`;
+				for (const reaction of message.reactions.cache.values()) {
+					transcriptContent += `${reaction.emoji.name || reaction.emoji.toString()}: ${reaction.count}\n`;
+				}
+				transcriptContent += `--- END REACTIONS ---\n`;
+			}
+
+			transcriptContent += `\n`; // Empty line between messages
 		}
 
-		// Create attachment
-		const buffer = Buffer.from(transcript, 'utf-8');
-		const attachment = new AttachmentBuilder(buffer, {
-			name: `ticket-${ticket.id}-transcript.txt`
-		});
+		transcriptContent += `\n=================\n`;
+		transcriptContent += `End of Transcript\n`;
+		transcriptContent += `Generated by MSRT Bot on ${new Date().toLocaleString()}\n`;
 
-		// Send transcript
+		// Create text file attachment
+		const buffer = Buffer.from(transcriptContent, 'utf-8');
+		const textAttachment = {
+			attachment: buffer,
+			name: `ticket-${ticket.id}-transcript.txt`
+		};
+
 		await interaction.editReply({
-			content: `📜 Transcript generated for Ticket #${ticket.id}`,
-			files: [attachment]
+			content: `📜 Transcript generated for Ticket #${ticket.id}\n\`\`\`\n📋 Messages: ${messages.length}\n🎫 Ticket Type: ${ticket.ticketType}\n👤 User: ${ticket.user.username}\n📅 Generated: ${new Date().toLocaleString()}\n\`\`\``,
+			files: [textAttachment]
 		});
 
 		return; // Success path
 
 	} catch (error) {
 		console.error('Error generating transcript:', error);
-		return interaction.editReply({ content: 'An error occurred while generating the transcript.' });
+		return interaction.editReply({
+			content: 'An error occurred while generating the transcript. Please try again or contact an administrator.'
+		});
 	}
 }
 

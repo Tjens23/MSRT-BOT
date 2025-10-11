@@ -1,6 +1,6 @@
 import { Listener } from '@sapphire/framework';
 import { Interaction } from 'discord.js';
-import { handleButton, handleEnlistmentModal, handleTranscriptButton, handleCloseTicketButton, handleDeleteChannelButton } from '../utils/Utils';
+import { handleButton, handleEnlistmentModal, handleLOAModal, handleTranscriptButton, handleCloseTicketButton, handleDeleteChannelButton } from '../utils/Utils';
 
 export class InteractionCreateEvent extends Listener {
 	public constructor(context: Listener.LoaderContext, options: Listener.Options) {
@@ -35,6 +35,9 @@ export class InteractionCreateEvent extends Listener {
 		if (interaction.isModalSubmit()) {
 			if (interaction.customId === 'enlistment_modal') {
 				await handleEnlistmentModal(interaction);
+			}
+			else if (interaction.customId === 'loa_modal') {
+				await handleLOAModal(interaction);
 			}
 		}
 	}

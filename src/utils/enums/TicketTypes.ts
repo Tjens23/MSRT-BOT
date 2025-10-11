@@ -1,4 +1,4 @@
-export enum TIcketTypes {
+export enum TicketTypes {
 	LOA,
 	ENLISTMENT,
 	STAFF,

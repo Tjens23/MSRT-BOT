@@ -1,9 +1,9 @@
 import { User } from "discord.js";
-import { TIcketTypes } from "../enums/TicketTypes";
+import { TicketTypes } from "../enums/TicketTypes";
 
 export interface ITicket {
     id: number;
     closed: boolean;
-    ticketType: TIcketTypes;
+    ticketType: TicketTypes;
     userId: User;
 }

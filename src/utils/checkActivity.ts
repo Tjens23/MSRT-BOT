@@ -20,6 +20,12 @@ export const CheckActivity = async () => {
     const guild = client.guilds.cache.get('1253817742054654075');
     if (!guild) return console.log("Couldn't find guild with ID: " + '1253817742054654075');
 
+    // Skip activity check for this specific guild
+    if (guild.id === '1253817742054654075') {
+        console.log(`Skipping activity check for guild: ${guild.name} (${guild.id})`);
+        return;
+    }
+
     const members = await guild.members.fetch();
     const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
     const excludedRoles = await excludedRoleIds();
