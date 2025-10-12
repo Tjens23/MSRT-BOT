@@ -40,7 +40,11 @@ export class BulkUpdateRanksCommand extends Command {
 
 			if (result) {
 				await interaction.editReply({
-					content: `✅ **Bulk rank update completed!**\n` + `🔄 Processed: ${result.processed} members\n` + `❌ Errors: ${result.errors}`
+					content:
+						`✅ **Bulk rank update completed!**\n` +
+						`🔄 Processed: ${result.processed} members\n` +
+						`📝 Ranks tracked: ${result.ranksTracked || 0}\n` +
+						`❌ Errors: ${result.errors}`
 				});
 			} else {
 				await interaction.editReply({
@@ -70,7 +74,11 @@ export class BulkUpdateRanksCommand extends Command {
 
 			if (result) {
 				await initialMessage.edit({
-					content: `✅ **Bulk rank update completed!**\n` + `🔄 Processed: ${result.processed} members\n` + `❌ Errors: ${result.errors}`
+					content:
+						`✅ **Bulk rank update completed!**\n` +
+						`🔄 Processed: ${result.processed} members\n` +
+						`📝 Ranks tracked: ${result.ranksTracked || 0}\n` +
+						`❌ Errors: ${result.errors}`
 				});
 			} else {
 				await initialMessage.edit({
