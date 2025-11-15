@@ -1,4 +1,7 @@
-CREATE DATABASE IF NOT EXISTS msrtbot;
+-- Check if database exists and create if it doesn't
+SELECT 'CREATE DATABASE msrtbot'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'msrtbot')\gexec
+
 \c msrtbot;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
