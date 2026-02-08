@@ -167,6 +167,11 @@ If you reoffend another minor rule within 30 days of your last warning, or you v
 			new ButtonBuilder().setLabel('Back to the Top').setStyle(ButtonStyle.Link).setURL(firstMessage.url)
 		);
 
-		channel.send({ embeds: [embed7], components: [row] });
+		channel.send({ embeds: [embed7], components: [row] }).then((m) => {
+			message.delete().catch((err) => console.error('Failed to delete command message:', err));
+			setTimeout(() => {
+				m.delete().catch((err) => console.error('Failed to delete enlistment embed message:', err));
+			}, 60000);
+		});
 	}
 }
