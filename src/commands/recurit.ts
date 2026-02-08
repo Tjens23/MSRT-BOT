@@ -86,6 +86,8 @@ Under the **<#1019389371717255218>** channel, there is an MSRT modpack. Before y
 
 Feel free to review the **<#1406752279817617580>**. While you will be taught everything you need to know to become a fully blooded marine in your OQT/BRQ, you can always review the material for a refresher.
 
+All green team announcements, updates and other imporant info will be posted in **<#1178021877818597477>**.
+
 OQT/As, BRQs and other Green Team events will be posted in **<#1178021877818597477>**. Scheduled events will appear on that channel and the "Events" tab at the very top above the server stats. Recruits have a maximum of 30 days to finish their IET process, otherwise they are discharged.
 
 If you have any further questions, do not hesitate to consult through your ticket, or ask in **<#1178021525211856896>**.
