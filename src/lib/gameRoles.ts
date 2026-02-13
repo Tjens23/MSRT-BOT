@@ -28,14 +28,14 @@ export const TACTICAL_GAMES: GameRole[] = [
 
 // Casual Games - Replace role IDs with your actual role IDs
 export const CASUAL_GAMES: GameRole[] = [
-	{ name: 'Phasmophobia', roleId: 'ROLE_ID_HERE', emoji: '👻' },
-	{ name: 'Project Zomboid', roleId: 'ROLE_ID_HERE', emoji: '🧟' },
-	{ name: 'For Honor', roleId: 'ROLE_ID_HERE', emoji: '⚔️' },
-	{ name: 'Hunt Showdown', roleId: 'ROLE_ID_HERE', emoji: '🔫' },
-	{ name: 'GTFO', roleId: 'ROLE_ID_HERE', emoji: '🔦' },
-	{ name: 'VTOL VR', roleId: 'ROLE_ID_HERE', emoji: '✈️' },
-	{ name: 'Helldivers 2', roleId: 'ROLE_ID_HERE', emoji: '🪖' },
-	{ name: 'Demonologist', roleId: 'ROLE_ID_HERE', emoji: '😈' },
-	{ name: 'Space Marine 2', roleId: 'ROLE_ID_HERE', emoji: '🚀' },
-	{ name: 'Mage Arena', roleId: 'ROLE_ID_HERE', emoji: '🧙' }
+	{ name: 'Phasmophobia', roleId: '1069822636273696838', emoji: '👻' },
+	{ name: 'Project Zomboid', roleId: '1069822955166629888', emoji: '🧟' },
+	{ name: 'For Honor', roleId: '1129125804027166800', emoji: '⚔️' },
+	{ name: 'Hunt Showdown', roleId: '1130975325371768983', emoji: '🔫' },
+	{ name: 'GTFO', roleId: '1133787507692163133', emoji: '🔦' },
+	{ name: 'VTOL VR', roleId: '1194350430508036137', emoji: '✈️' },
+	{ name: 'Helldivers 2', roleId: '1206647682966495302', emoji: '🪖' },
+	{ name: 'Demonologist', roleId: '1416563154573594705', emoji: '😈' },
+	{ name: 'Space Marine 2', roleId: '1282897739046191114', emoji: '🚀' },
+	{ name: 'Mage Arena', roleId: '1416563373218467921', emoji: '🧙' }
 ];
