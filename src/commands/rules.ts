@@ -21,7 +21,6 @@ export class UserCommand extends Command {
 
 		const embed2 = new EmbedBuilder()
 			.setTitle('**MSRT Mission Statement**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription(
 				`To inspire others to master themselves through our unwavering pursuit of excellent Mil-Sim.
 
@@ -65,7 +64,6 @@ Any member of this unit who is found to be using / copying / ripping / plagiariz
 
 		const embed3 = new EmbedBuilder()
 			.setTitle('**OUR MOTTOS**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription(
 				`**VINCIT QUI SE VINCIT**
 *"He conquers who conquers himself"*
@@ -83,7 +81,6 @@ Make those we seek to emulate proud. That is all.
 
 		const embed4 = new EmbedBuilder()
 			.setTitle('**U.S.M.C. SPECIAL REACTION TEAM RULES**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription(
 				`1. No spamming in any of the chats.
 
@@ -126,7 +123,6 @@ Make those we seek to emulate proud. That is all.
 
 		const embed5 = new EmbedBuilder()
 			.setTitle('**PERSONAL CONDUCT**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription(
 				`1. You are a member of the Marine Special Reactions Team unit. You have a responsibility as a member, and friend to other members, to ensure you are helping to create and foster a friendly, safe, and fun environment to play MilSim in.
 
@@ -141,7 +137,6 @@ Make those we seek to emulate proud. That is all.
 
 		const embed6 = new EmbedBuilder()
 			.setTitle('**PUNISHMENT**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription(
 				`1. The most minor punishment is a verbal, formal warning. This warning is the first step for the first recent offense of a minor rule. Warnings are less of a punishment, and more of a friendly reminder not to repeat actions in violation of our rules. After the verbal warning is issued, the offending officer is now recognized as being aware of the issue to fix. We expect the officer to adjust their behavior accordingly. Warnings expire after 30 days.
 
@@ -155,7 +150,6 @@ If you reoffend another minor rule within 30 days of your last warning, or you v
 
 		const embed7 = new EmbedBuilder()
 			.setTitle('**ENLISTMENT**')
-			.setThumbnail(message.guild!.iconURL() ?? '')
 			.setDescription('**CLICK BUTTON TO SUBMIT AN ENLISTMENT TICKET TODAY!**');
 
 		const firstMessage = await channel.send({ embeds: [embed1] });
@@ -173,6 +167,11 @@ If you reoffend another minor rule within 30 days of your last warning, or you v
 			new ButtonBuilder().setLabel('Back to the Top').setStyle(ButtonStyle.Link).setURL(firstMessage.url)
 		);
 
-		channel.send({ embeds: [embed7], components: [row] });
+		channel.send({ embeds: [embed7], components: [row] }).then((m) => {
+			message.delete().catch((err) => console.error('Failed to delete command message:', err));
+			setTimeout(() => {
+				m.delete().catch((err) => console.error('Failed to delete enlistment embed message:', err));
+			}, 60000);
+		});
 	}
 }
