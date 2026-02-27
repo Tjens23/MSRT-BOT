@@ -1,18 +1,30 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, ButtonStyle, ComponentType, EmbedBuilder, Message, TextChannel } from 'discord.js';
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonInteraction,
+	ButtonStyle,
+	ComponentType,
+	EmbedBuilder,
+	Message,
+	PermissionFlagsBits,
+	TextChannel
+} from 'discord.js';
 
 @ApplyOptions<Command.Options>({
 	description: 'Create a poll with options and real-time results',
 	aliases: ['poll'],
-	name: 'poll'
+	name: 'poll',
+	fullCategory: ['Admin'],
+	requiredClientPermissions: [PermissionFlagsBits.Administrator]
 })
 export class PollCommand extends Command {
 	override async messageRun(message: Message, args: Args) {
 		const title = await args.pickResult('string');
 		const description = await args.pickResult('string');
 		const optionsString = await args.restResult('string');
-		
+
 		if (!title.isOk() || !description.isOk() || !optionsString.isOk()) {
 			return message.reply(
 				'Usage: ?poll <title> <description> <options>\nExample: ?poll Favorite Color What is your favorite color? Red,Blue,Green'
@@ -72,9 +84,9 @@ export class PollCommand extends Command {
 
 		collector.on('collect', async (interaction: ButtonInteraction) => {
 			if (!interaction.isButton()) return;
-	
+
 			if (hasVoted.get(interaction.user.id)) return interaction.reply({ content: 'You have already voted!', ephemeral: true });
-			
+
 			const selectedOption = interaction.customId.split('_')[1];
 			const option = options[parseInt(selectedOption)];
 
@@ -82,7 +94,6 @@ export class PollCommand extends Command {
 			embed.spliceFields(0, 1, { name: 'Results', value: generateResults() });
 			await pollMessage.edit({ embeds: [embed] });
 
-		
 			hasVoted.set(interaction.user.id, true);
 			return await interaction.reply({ content: `Your vote for **${option}** has been recorded!`, ephemeral: true });
 		});

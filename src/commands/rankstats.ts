@@ -1,12 +1,21 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
-import { EmbedBuilder, ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, Message } from 'discord.js';
+import {
+	EmbedBuilder,
+	ApplicationIntegrationType,
+	InteractionContextType,
+	ChatInputCommandInteraction,
+	Message,
+	PermissionFlagsBits
+} from 'discord.js';
 import { getRankStatistics } from '../utils/Utils';
 
 @ApplyOptions<Command.Options>({
 	description: 'Get detailed statistics about a specific rank',
 	name: 'rankstats',
-	aliases: ['rankstat', 'rs']
+	aliases: ['rankstat', 'rs'],
+	fullCategory: ['Info'],
+	requiredUserPermissions: [PermissionFlagsBits.Administrator]
 })
 export class RankStatsCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {

@@ -6,7 +6,8 @@ import { Message } from 'discord.js';
 	description: 'removes a role from all members with a specific role',
 	requiredClientPermissions: ['ManageRoles'],
 	name: 'massrole-remove',
-	aliases: ['massroleremove', 'mrr']
+	aliases: ['massroleremove', 'mrr'],
+	fullCategory: ['Admin']
 })
 export class MassRoleRemove extends Command {
 	public override async messageRun(message: Message, args: Args) {

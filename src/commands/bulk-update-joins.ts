@@ -7,7 +7,8 @@ import { bulkUpdateJoinDates } from '../utils/bulkUpdateJoinDates';
 	description: 'Admin command to bulk update join dates for all server members',
 	name: 'bulk-update-joins',
 	aliases: ['bulkupdatejoins', 'buj'],
-	requiredUserPermissions: [PermissionFlagsBits.Administrator]
+	requiredUserPermissions: [PermissionFlagsBits.Administrator],
+	fullCategory: ['Admin']
 })
 export class BulkUpdateCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {

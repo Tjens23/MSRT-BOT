@@ -6,7 +6,8 @@ import { Message, TextChannel, EmbedBuilder } from 'discord.js';
 	name: 'recruit',
 	description: 'Send the USMC SRT welcome message for new recruits',
 	requiredClientPermissions: ['SendMessages'],
-	requiredUserPermissions: ['Administrator']
+	requiredUserPermissions: ['Administrator'],
+	fullCategory: ['Admin']
 })
 export class Recruit extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {

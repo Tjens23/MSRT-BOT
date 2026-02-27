@@ -1,42 +1,35 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptions } from '@sapphire/framework';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, TextChannel } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, PermissionFlagsBits, TextChannel } from 'discord.js';
 ApplyOptions<CommandOptions>({
-	description: "Post the ticket creation panel",
+	description: 'Post the ticket creation panel',
 	name: 'ticket-panel',
-	preconditions: ['OwnerOnly']
+	preconditions: ['OwnerOnly'],
+	requiredUserPermissions: [PermissionFlagsBits.Administrator],
+	fullCategory: ['Admin']
 });
 
 export class EnlistmentCommand extends Command {
 	public override async messageRun(message: Message) {
 		const channel = message.channel as TextChannel;
-	
+
 		const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-			new ButtonBuilder()
-			  .setCustomId("ticket_enlistment")
-			  .setLabel("🪖 Enlistment")
-			  .setStyle(ButtonStyle.Primary),
-			new ButtonBuilder()
-			  .setCustomId("ticket_hr")
-			  .setLabel("🛠 HR ticket")
-			  .setStyle(ButtonStyle.Secondary),
-			new ButtonBuilder()
-			  .setCustomId("ticket_loa")
-			  .setLabel("📆 LOA")
-			  .setStyle(ButtonStyle.Secondary)
-		  );
+			new ButtonBuilder().setCustomId('ticket_enlistment').setLabel('🪖 Enlistment').setStyle(ButtonStyle.Primary),
+			new ButtonBuilder().setCustomId('ticket_hr').setLabel('🛠 HR ticket').setStyle(ButtonStyle.Secondary),
+			new ButtonBuilder().setCustomId('ticket_loa').setLabel('📆 LOA').setStyle(ButtonStyle.Secondary)
+		);
 		const embed = new EmbedBuilder()
 			.setAuthor({
 				name: 'Marine Special Reactions Enlistment'
 			})
 			.setDescription(
 				'Submit an Enlistment Ticket today! \nDo understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.\n\n' +
-				'🪖 **Enlistment** - for enlisting in the server\n' +
-				'🛠 **HR ticket** - anything regarding HR\n' +
-				'📆 **LOA** - for when you need to go on LOA'
+					'🪖 **Enlistment** - for enlisting in the server\n' +
+					'🛠 **HR ticket** - anything regarding HR\n' +
+					'📆 **LOA** - for when you need to go on LOA'
 			)
 			.setFooter({ iconURL: message.guild!.members.me?.displayAvatarURL().toString(), text: message.guild!.name });
-		await message.delete()
+		await message.delete();
 		await channel.send({ embeds: [embed], components: [buttons] });
 	}
 }

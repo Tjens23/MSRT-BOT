@@ -1,6 +1,13 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
-import { EmbedBuilder, ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, Message } from 'discord.js';
+import {
+	EmbedBuilder,
+	ApplicationIntegrationType,
+	InteractionContextType,
+	ChatInputCommandInteraction,
+	Message,
+	PermissionFlagsBits
+} from 'discord.js';
 import { getUserCurrentRanks, getUserRankHistory, getRankLeaderboard } from '../utils/rankTracking';
 import { database } from '../database';
 import User from '../database/entities/User';
@@ -8,7 +15,9 @@ import User from '../database/entities/User';
 @ApplyOptions<Command.Options>({
 	description: 'Check rank history and time in rank for users',
 	name: 'ranktime',
-	aliases: ['rt', 'rankhistory']
+	aliases: ['rt', 'rankhistory'],
+	requiredUserPermissions: [PermissionFlagsBits.Administrator],
+	fullCategory: ['Info']
 })
 export class RankTimeCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {

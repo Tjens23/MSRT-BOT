@@ -6,7 +6,8 @@ import { Message } from 'discord.js';
 	description: 'Add a role to all members with a specific role',
 	name: 'massrole-add',
 	requiredClientPermissions: ['ManageRoles'],
-	aliases: ['massroleadd', 'mra']
+	aliases: ['massroleadd', 'mra'],
+	fullCategory: ['Admin']
 })
 export class MassRoleAdd extends Command {
 	public override async messageRun(message: Message, args: Args) {

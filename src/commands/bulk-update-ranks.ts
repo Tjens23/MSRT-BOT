@@ -7,7 +7,8 @@ import { bulkUpdateRanks } from '../utils/bulkUpdateRanks';
 	description: 'Admin command to bulk update rank data for all server members',
 	name: 'bulk-update-ranks',
 	aliases: ['bulkupdateranks', 'bur'],
-	requiredUserPermissions: [PermissionFlagsBits.Administrator]
+	requiredUserPermissions: [PermissionFlagsBits.Administrator],
+	fullCategory: ['Admin']
 })
 export class BulkUpdateRanksCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {
