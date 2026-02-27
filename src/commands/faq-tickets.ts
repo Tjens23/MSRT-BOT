@@ -3,9 +3,10 @@ import { Command, Args, CommandOptions } from '@sapphire/framework';
 import { Message, EmbedBuilder, TextChannel, Colors } from 'discord.js';
 
 @ApplyOptions<CommandOptions>({
-	name: 'faq',
+	name: 'faq-ticket',
 	description: 'Shows the FAQ menu',
-	fullCategory: ['General']
+	fullCategory: ['Admin'],
+	requiredUserPermissions: ['Administrator']
 })
 export default class faqCommand extends Command {
 	public override async messageRun(message: Message, _args: Args) {
