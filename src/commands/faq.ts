@@ -14,6 +14,7 @@ export default class faqCommand extends Command {
 
 		const embed = new EmbedBuilder()
 			.setTitle('Frequently Asked Questions (FAQ)')
+			.setDescription(`Make sure you read the FAQ before creating a ticket.`)
 			.setThumbnail(message.guild?.iconURL({ forceStatic: true }) as string)
 			.setFooter({
 				text: `For any other queries, please refer to your enlistment ticket, or create a support ticket, should you not be able to create an enlistment ticket. You may also DM the S-1 CO Delran should you need any assistance.`,
