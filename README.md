@@ -12,6 +12,7 @@ This is the official Discord bot for the Marine Special Reactions Team (MSRT). T
 We would like to thank the following contributors for their efforts in developing and maintaining this project:
 
 - [Tjens23](https://github.com/Tjens23)
+- [JelleCraft](https://github.com/JelleCraft)
 
 ## How to Contribute
 
