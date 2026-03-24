@@ -5,7 +5,7 @@ import { sendVoteReminder } from '../utils/voteReminder';
 @ApplyOptions<Command.Options>({
     description: 'Sends a vote reminder to this current channel'
 })
-export class UserCommand extends Command {
+export class VoteReminderCommand extends Command {
     public override registerApplicationCommands(registry: Command.Registry) {
         registry.registerChatInputCommand({
             name: this.name,
