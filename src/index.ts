@@ -3,8 +3,11 @@ import './lib/setup';
 
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
-import { database } from './database';
+// import { database } from './database';
 import { CheckActivity } from './utils/checkActivity';
+// import { sendVoteReminder } from './utils/voteReminder';
+
+// in main(), after client.login():
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX ?? '!',
@@ -25,16 +28,17 @@ export const client = new SapphireClient({
 
 const main = async () => {
 	try {
-		database
-			.initialize()
-			.then(() => client.logger.info('Database connected'))
-			.catch((error) => client.logger.fatal(error));
+	// 	database
+	// 		.initialize()
+	// 		.then(() => client.logger.info('Database connected'))
+	// 		.catch((error) => client.logger.fatal(error));
 		client.logger.info('Logging in');
 		await client.login();
 		client.logger.info('logged in');
 		await CheckActivity();
-		//cron.schedule('*/5 * * * *', await CheckActivity);
-		//cron.schedule('*/5 * * * *', checkYouTubeChannel);
+		// await sendVoteReminder();
+	// 	//cron.schedule('*/5 * * * *', await CheckActivity);
+	// 	//cron.schedule('*/5 * * * *', checkYouTubeChannel);
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();

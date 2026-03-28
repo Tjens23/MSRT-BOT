@@ -106,7 +106,7 @@ export async function handleButton(interaction: ButtonInteraction) {
 			// Game preference
 			const gameInput = new TextInputBuilder()
 				.setCustomId('game')
-				.setLabel('"Ready or Not" or "Ground Branch"?')
+				.setLabel('"Ready or Not", "Phoenix" or "Ground Branch"?')
 				.setStyle(TextInputStyle.Short)
 				.setRequired(true)
 				.setMaxLength(50);
