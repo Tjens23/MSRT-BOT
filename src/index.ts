@@ -7,7 +7,7 @@ import { database } from './database';
 import { CheckActivity } from './utils/checkActivity';
 
 export const client = new SapphireClient({
-	defaultPrefix: process.env.PREFIX ?? '!',
+	defaultPrefix: process.env.PREFIX ?? '-',
 	caseInsensitiveCommands: true,
 	logger: {
 		level: LogLevel.Debug
