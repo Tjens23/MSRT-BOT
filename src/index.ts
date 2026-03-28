@@ -3,7 +3,7 @@ import './lib/setup';
 
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
-import { database } from './database';
+import { initializeDatabase } from './database';
 import { CheckActivity } from './utils/checkActivity';
 
 export const client = new SapphireClient({
@@ -25,10 +25,8 @@ export const client = new SapphireClient({
 
 const main = async () => {
 	try {
-		database
-			.initialize()
-			.then(() => client.logger.info('Database connected'))
-			.catch((error) => client.logger.fatal(error));
+		await initializeDatabase();
+		client.logger.info('Database connected');
 		client.logger.info('Logging in');
 		await client.login();
 		client.logger.info('logged in');

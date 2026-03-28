@@ -1,21 +1,46 @@
 import { client } from "../index";
-import { database } from "../database";
+import { database, initializeDatabase } from "../database";
 import User from "../database/entities/User";
 import { UserActivity } from "../database/entities/UserActivity";
+
+/**
+ * Extract callsign from nickname format: "Callsign | Rank | Paygrade"
+ * Falls back to username if nickname is not set
+ */
+function extractCallsign(nickname: string | null, username: string): string {
+    if (!nickname) return username;
+    const callsign = nickname.split('|')[0].trim();
+    return callsign || username;
+}
+
+/**
+ * Ensure callsign is unique by appending a counter if it already exists
+ */
+async function ensureUniqueCallsign(baseCallsign: string): Promise<string> {
+    let callsign = baseCallsign;
+    let counter = 2;
+    
+    while (await User.findOne({ where: { callsign } })) {
+        callsign = `${baseCallsign}#${counter}`;
+        counter++;
+    }
+    
+    return callsign;
+}
 
 /**
  * Bulk update join dates for all existing members in the guild
  * This should be run once to populate the database with existing member data
  */
-export const bulkUpdateJoinDates = async (guildId: string = '1253817742054654075') => {
+export const bulkUpdateJoinDates = async (guildId: string) => {
     console.log('Starting bulk update of join dates...');
     
     // Initialize database if not connected
     if (!database.isInitialized) {
-        await database.initialize();
+        await initializeDatabase();
     }
 
-    const guild = client.guilds.cache.get(guildId);
+    const guild = client.guilds.cache.get(guildId) ?? await client.guilds.fetch(guildId).catch(() => null);
     if (!guild) {
         console.error(`Guild with ID ${guildId} not found`);
         return;
@@ -31,6 +56,11 @@ export const bulkUpdateJoinDates = async (guildId: string = '1253817742054654075
     for (const [, member] of members) {
         if (member.user.bot) continue;
 
+        const baseCallsign = extractCallsign(member.nickname, member.user.username);
+        if (baseCallsign === 'Guest' || baseCallsign === 'Reserve') {
+            continue;
+        }
+
         try {
             let user = await User.findOne({ 
                 where: { userId: member.user.id },
@@ -42,7 +72,7 @@ export const bulkUpdateJoinDates = async (guildId: string = '1253817742054654075
                 user = new User();
                 user.userId = member.user.id;
                 user.username = member.user.username;
-                user.callsign = member.user.username;
+                user.callsign = await ensureUniqueCallsign(baseCallsign);
                 await user.save();
 
                 // Create user activity record with join date
