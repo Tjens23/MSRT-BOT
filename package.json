@@ -29,7 +29,9 @@
 		"@types/node-cron": "^3.0.0",
 		"@types/ws": "^8.5.13",
 		"prettier": "^3.4.2",
+		"ts-node": "^10.9.2",
 		"tsc-watch": "^6.3.0",
+		"tsx": "^4.20.6",
 		"typescript": "~5.4.5"
 	},
 	"scripts": {
@@ -41,7 +43,8 @@
 		"dev": "npm run build && npm run start",
 		"watch:start": "tsc-watch --onSuccess \"npm run start\"",
 		"format": "prettier --write \"src/\"",
-		"cron": "node -e \"require('./dist/index').checkYouTubeChannel()\""
+		"cron": "node -e \"require('./dist/index').checkYouTubeChannel()\"",
+		"tslesson": "tsx src/commands/cheatsheet.ts"
 	},
 	"prettier": "@sapphire/prettier-config"
 }

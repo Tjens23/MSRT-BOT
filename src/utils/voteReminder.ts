@@ -3,6 +3,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, TextChannel
 
 const UNIT_ID = process.env.MILSIM_UNIT_ID!;
 if (!UNIT_ID) throw new Error('Missing env variable: MILSIM_UNIT_ID');
+
 const API_URL = `https://milsimunits.com/api/units/${UNIT_ID}`;
 
 interface MilSimUnit {
@@ -17,9 +18,12 @@ interface MilSimUnit {
 
 export async function sendVoteReminder(channelId: string): Promise<void> {
     const response = await fetch(API_URL);
+
     if (!response.ok) {
-        container.logger.error(`failed to fetch unit data: ${response.status} ${response.statusText}`)
+        container.logger.error(`failed to fetch unit data: ${response.status} ${response.statusText}`);
+        return;
     }
+
     const unit = await response.json() as MilSimUnit;
     container.logger.info(`Fetched unit: ${unit.name}, votes today: ${unit.current_vote_count}`);
 
@@ -44,11 +48,20 @@ export async function sendVoteReminder(channelId: string): Promise<void> {
     );
 
     const channel = await container.client.channels.fetch(channelId);
+
     if (!channel || !(channel instanceof TextChannel)) {
         container.logger.warn('Provided channel ID is not a valid text channel');
         return;
     }
 
-    await channel.send({ embeds: [embed], components: [button] });
+    await channel.send({
+        content: `<@&${process.env.VOTE_REMINDER_ROLE!}>`,
+        embeds: [embed],
+        components: [button],
+        allowedMentions: {
+            roles: [process.env.VOTE_REMINDER_ROLE!]
+        }
+    });
+
     container.logger.info('Vote reminder sent!');
 }

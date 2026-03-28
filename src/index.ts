@@ -5,6 +5,8 @@ import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
 import { initializeDatabase } from './database';
 import { CheckActivity } from './utils/checkActivity';
+import { sendVoteReminder } from './utils/voteReminder';
+
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX ?? '-',
@@ -31,8 +33,7 @@ const main = async () => {
 		await client.login();
 		client.logger.info('logged in');
 		await CheckActivity();
-		//cron.schedule('*/5 * * * *', await CheckActivity);
-		//cron.schedule('*/5 * * * *', checkYouTubeChannel);
+		await sendVoteReminder(process.env.VOTE_REMINDER_CHANNEL_ID!);
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();
