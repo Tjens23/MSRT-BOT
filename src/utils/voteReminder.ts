@@ -16,52 +16,69 @@ interface MilSimUnit {
     banner_url: string;
 }
 
-export async function sendVoteReminder(channelId: string): Promise<void> {
-    const response = await fetch(API_URL);
+function isSnowflake(value: string): boolean {
+    return /^\d{17,20}$/.test(value);
+}
 
-    if (!response.ok) {
-        container.logger.error(`failed to fetch unit data: ${response.status} ${response.statusText}`);
-        return;
-    }
-
-    const unit = await response.json() as MilSimUnit;
-    container.logger.info(`Fetched unit: ${unit.name}, votes today: ${unit.current_vote_count}`);
-
-    const embed = new EmbedBuilder()
-        .setTitle(`🗳️ Daily Vote Reminder — ${unit.clan_tag}`)
-        .setDescription(`Support **${unit.name}** by casting your daily vote on MilSim Units!`)
-        .addFields(
-            { name: '📊 Votes Today', value: `${unit.current_vote_count}`, inline: true },
-            { name: '👥 Members', value: `${unit.member_count}`, inline: true },
-        )
-        .setThumbnail(unit.insignia_url)
-        .setColor(0x48462d)
-        .setFooter({ text: 'VINCIT QUI SE VINCIT — He conquers who conquers himself' })
-        .setTimestamp();
-
-    const button = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setLabel('Vote for MSRT')
-            .setStyle(ButtonStyle.Link)
-            .setURL(`https://milsimunits.com/unit/${process.env.MILSIM_VOTE_SLUG!}`)
-            .setEmoji('🗳️')
-    );
-
-    const channel = await container.client.channels.fetch(channelId);
-
-    if (!channel || !(channel instanceof TextChannel)) {
-        container.logger.warn('Provided channel ID is not a valid text channel');
-        return;
-    }
-
-    await channel.send({
-        content: `<@&${process.env.VOTE_REMINDER_ROLE!}>`,
-        embeds: [embed],
-        components: [button],
-        allowedMentions: {
-            roles: [process.env.VOTE_REMINDER_ROLE!]
+export async function sendVoteReminder(channelId?: string): Promise<void> {
+    try {
+        if (!channelId || !isSnowflake(channelId)) {
+            container.logger.warn('Vote reminder skipped: missing or invalid channel ID. Set VOTE_REMINDER_CHANNEL_ID or VOTE_CHANNEL_ID.');
+            return;
         }
-    });
 
-    container.logger.info('Vote reminder sent!');
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+            container.logger.error(`failed to fetch unit data: ${response.status} ${response.statusText}`);
+            return;
+        }
+
+        const unit = await response.json() as MilSimUnit;
+        container.logger.info(`Fetched unit: ${unit.name}, votes today: ${unit.current_vote_count}`);
+
+        const embed = new EmbedBuilder()
+            .setTitle(`🗳️ Daily Vote Reminder — ${unit.clan_tag}`)
+            .setDescription(`Support **${unit.name}** by casting your daily vote on MilSim Units!`)
+            .addFields(
+                { name: '📊 Votes Today', value: `${unit.current_vote_count}`, inline: true },
+                { name: '👥 Members', value: `${unit.member_count}`, inline: true },
+            )
+            .setThumbnail(unit.insignia_url)
+            .setColor(0x48462d)
+            .setFooter({ text: 'VINCIT QUI SE VINCIT — He conquers who conquers himself' })
+            .setTimestamp();
+
+        const button = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setLabel('Vote for MSRT')
+                .setStyle(ButtonStyle.Link)
+                .setURL(`https://milsimunits.com/unit/${process.env.MILSIM_VOTE_SLUG!}`)
+                .setEmoji('🗳️')
+        );
+
+        const channel = await container.client.channels.fetch(channelId);
+
+        if (!channel || !(channel instanceof TextChannel)) {
+            container.logger.warn('Provided channel ID is not a valid text channel');
+            return;
+        }
+
+        const voteReminderRole = process.env.VOTE_REMINDER_ROLE;
+        const mentionContent = voteReminderRole && isSnowflake(voteReminderRole) ? `<@&${voteReminderRole}>` : undefined;
+
+        await channel.send({
+            content: mentionContent,
+            embeds: [embed],
+            components: [button],
+            allowedMentions: {
+                roles: voteReminderRole && isSnowflake(voteReminderRole) ? [voteReminderRole] : []
+            }
+        });
+
+        container.logger.info('Vote reminder sent!');
+    } catch (error) {
+        container.logger.error('Vote reminder failed. Ensure the bot can view/send messages in the configured channel.');
+        container.logger.debug(error as Error);
+    }
 }

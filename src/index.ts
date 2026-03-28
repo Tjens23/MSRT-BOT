@@ -33,7 +33,8 @@ const main = async () => {
 		await client.login();
 		client.logger.info('logged in');
 		await CheckActivity();
-		await sendVoteReminder(process.env.VOTE_REMINDER_CHANNEL_ID!);
+		const voteReminderChannelId = process.env.VOTE_REMINDER_CHANNEL_ID ?? process.env.VOTE_CHANNEL_ID;
+		await sendVoteReminder(voteReminderChannelId);
 	} catch (error) {
 		client.logger.fatal(error);
 		await client.destroy();
