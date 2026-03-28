@@ -10,13 +10,30 @@ import { excludedRoleIds } from './excludeRoleIds';
 export const bulkUpdateRanks = async (guildId: string = '1253817742054654075') => {
 	console.log('Starting bulk update of member ranks...');
 
-	const guild = client.guilds.cache.get(guildId);
+	const guild = client.guilds.cache.get(guildId) ?? await client.guilds.fetch(guildId).catch(() => null);
 	if (!guild) {
 		console.error(`Guild with ID ${guildId} not found`);
 		return;
 	}
 
-	const members = await guild.members.fetch();
+	let members;
+	try {
+		members = await guild.members.fetch({ time: 120_000 });
+	} catch (error) {
+		const maybeError = error as { code?: string; message?: string };
+		if (maybeError.code === 'GuildMembersTimeout') {
+			console.warn('Guild member fetch timed out. Continuing with cached members only.');
+			members = guild.members.cache;
+		} else {
+			throw error;
+		}
+	}
+
+	if (!members || members.size === 0) {
+		console.warn('No members available to process after fetch/cache fallback.');
+		return { processed: 0, errors: 0, ranksTracked: 0 };
+	}
+
 	const rankRoleIds = await getRankRoleIds();
 	const excludedRoles = await excludedRoleIds();
 

@@ -20,10 +20,24 @@ function isSnowflake(value: string): boolean {
     return /^\d{17,20}$/.test(value);
 }
 
+function isMissingAccessError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+
+    const maybeError = error as { code?: number };
+    return maybeError.code === 50001;
+}
+
+function formatDiscordError(error: unknown): string {
+    if (!error || typeof error !== 'object') return 'unknown error';
+
+    const maybeError = error as { code?: number; status?: number; message?: string };
+    return `code=${String(maybeError.code ?? 'unknown')} status=${String(maybeError.status ?? 'unknown')} message=${maybeError.message ?? 'unknown'}`;
+}
+
 export async function sendVoteReminder(channelId?: string): Promise<void> {
     try {
         if (!channelId || !isSnowflake(channelId)) {
-            container.logger.warn('Vote reminder skipped: missing or invalid channel ID. Set VOTE_REMINDER_CHANNEL_ID or VOTE_CHANNEL_ID.');
+            container.logger.warn('Vote reminder skipped: missing or invalid channel ID. Set or VOTE_CHANNEL_ID.');
             return;
         }
 
@@ -78,7 +92,15 @@ export async function sendVoteReminder(channelId?: string): Promise<void> {
 
         container.logger.info('Vote reminder sent!');
     } catch (error) {
-        container.logger.error('Vote reminder failed. Ensure the bot can view/send messages in the configured channel.');
+        if (isMissingAccessError(error)) {
+            const visibleGuildIds = container.client.guilds.cache.map((guild) => guild.id).join(', ');
+            container.logger.warn(
+                `Vote reminder skipped: Discord returned 50001 for channel ${channelId}. Bot can currently access guild(s): ${visibleGuildIds || 'none'}.`
+            );
+            return;
+        }
+
+        container.logger.error(`Vote reminder failed: ${formatDiscordError(error)}`);
         container.logger.debug(error as Error);
     }
 }

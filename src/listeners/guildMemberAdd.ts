@@ -59,11 +59,19 @@ export class Joinevent extends Listener {
 		// Track initial ranks for the new member
 		await trackRankChanges(member);
 
-		const channel: TextChannel = member.guild.channels.cache.find((channel) => channel.name === 'welcome') as TextChannel;
-		const logChannel: TextChannel = member.guild.channels.cache.find((channel) => channel.name === 'logs') as TextChannel;
-		if (!channel) {
-			logChannel.send(`${channel} wasn't found, creating one for you!`);
-			member.guild.channels.create({
+		let welcomeChannel = member.guild.channels.cache.find(
+			(channel) => channel.type === ChannelType.GuildText && channel.name === 'welcome'
+		) as TextChannel | undefined;
+		const logChannel = member.guild.channels.cache.find(
+			(channel) => channel.type === ChannelType.GuildText && channel.name === 'logs'
+		) as TextChannel | undefined;
+
+		if (!welcomeChannel) {
+			if (logChannel) {
+				await logChannel.send('welcome channel was not found, creating one now.');
+			}
+
+			const createdChannel = await member.guild.channels.create({
 				name: 'welcome',
 				type: ChannelType.GuildText,
 				parent: '1333202423619260417',
@@ -74,13 +82,22 @@ export class Joinevent extends Listener {
 					}
 				]
 			});
+
+			if (createdChannel.type === ChannelType.GuildText) {
+				welcomeChannel = createdChannel;
+			}
 		}
 
 		const welcomeEmbed = new EmbedBuilder()
 			.setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL() })
 			.setColor(Colors.Blurple)
 			.setDescription(`Welcome to ${member.guild.name}, ${member}!`);
-		await channel.send({ embeds: [welcomeEmbed] });
+		if (!welcomeChannel) {
+			this.container.logger.warn(`Unable to send welcome message for ${member.user.tag}: welcome channel unavailable.`);
+			return;
+		}
+
+		await welcomeChannel.send({ embeds: [welcomeEmbed] });
 
 		const rolesToAdd: Array<Role> = [];
 
