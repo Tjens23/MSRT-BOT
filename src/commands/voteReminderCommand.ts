@@ -3,7 +3,8 @@ import { Command } from '@sapphire/framework';
 import { sendVoteReminder } from '../utils/voteReminder';
 
 @ApplyOptions<Command.Options>({
-    description: 'Sends a vote reminder to this current channel'
+    description: 'Sends a vote reminder to this current channel',
+    fullCategory: ["General"]
 })
 export class VoteReminderCommand extends Command {
     public override registerApplicationCommands(registry: Command.Registry) {
