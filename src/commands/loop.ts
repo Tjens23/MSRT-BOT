@@ -37,17 +37,20 @@ export default class LoopCommand extends Command {
 
 		// Set specific mode
 		const lowerMode = mode.toLowerCase();
-		if (lowerMode === 'track' || lowerMode === 'song') {
-			await player.setRepeatMode('track');
-			return message.reply('Now looping the **current track**.');
-		} else if (lowerMode === 'queue' || lowerMode === 'all') {
-			await player.setRepeatMode('queue');
-			return message.reply('Now looping the **entire queue**.');
-		} else if (lowerMode === 'off' || lowerMode === 'none' || lowerMode === 'disable') {
-			await player.setRepeatMode('off');
-			return message.reply('Loop mode **disabled**.');
-		}
 
-		return message.reply('Invalid mode. Use `track`, `queue`, or `off`.');
+		switch (lowerMode) {
+			case 'song':
+				await player.setRepeatMode('track');
+				return message.reply('Now looping the **current track**.');
+			case 'all':
+				await player.setRepeatMode('queue');
+				return message.reply('Now looping the **entire queue**.');
+			case 'off':
+			case 'none':
+			case 'disable':
+				await player.setRepeatMode('off');
+				return message.reply('Loop mode **disabled**.');
+		}
+		return message.reply('Now looping the **current track**.');
 	}
 }
