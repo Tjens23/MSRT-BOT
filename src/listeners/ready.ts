@@ -9,7 +9,7 @@ const dev = process.env.NODE_ENV !== 'production';
 export class UserEvent extends Listener {
 	private readonly style = dev ? yellow : blue;
 
-	public override run() {
+	public override async run() {
 		this.printBanner();
 		this.printStoreDebugInformation();
 	}
