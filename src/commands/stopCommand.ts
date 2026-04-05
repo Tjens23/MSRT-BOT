@@ -7,8 +7,7 @@ import { client } from '..';
 	name: 'stop',
 	aliases: ['s'],
 	description: 'Stop the currently playing music and clear the queue',
-	fullCategory: ['Music'],
-	flags: ['sc', 'soundcloud', 'sp', 'spotify', 'yt', 'youtube']
+	fullCategory: ['Music']
 })
 export default class StopCommand extends Command {
 	public override async messageRun(message: Message) {
