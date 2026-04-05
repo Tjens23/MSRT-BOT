@@ -152,7 +152,8 @@ client.lavalink.on('trackStart', (player: any, track: any) => {
 });
 
 client.lavalink.on('trackEnd', (_player: any, track: any, reason: any) => {
-	console.log(`[Lavalink] Track ended: ${track?.info?.title} - Reason: ${reason}`);
+	const reasonStr = typeof reason === 'object' ? JSON.stringify(reason) : reason;
+	console.log(`[Lavalink] Track ended: ${track?.info?.title} - Reason: ${reasonStr}`);
 });
 
 client.lavalink.on('queueEnd', (player: any) => {
