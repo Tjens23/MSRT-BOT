@@ -41,6 +41,9 @@ importers:
       googleapis:
         specifier: ^144.0.0
         version: 144.0.0
+      lavalink-client:
+        specifier: ^2.9.11
+        version: 2.9.11
       node-cron:
         specifier: ^3.0.3
         version: 3.0.3
@@ -1262,6 +1265,10 @@ packages:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
 
+  lavalink-client@2.9.11:
+    resolution: {integrity: sha512-38mB7utJZ/WTdtV065n/mHTm17f1RSLLwvrV3J3Uh+7LRQKMXmuNj3EzyD61Azfu32XtzE62EkD6K7kmzR6/Cg==}
+    engines: {bun: '>=1.1.27', node: '>=18.0.0'}
+
   locate-path@6.0.0:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
@@ -2199,6 +2206,18 @@ packages:
 
   ws@8.18.0:
     resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.20.0:
+    resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -3544,6 +3563,14 @@ snapshots:
 
   kleur@3.0.3: {}
 
+  lavalink-client@2.9.11:
+    dependencies:
+      tslib: 2.8.1
+      ws: 8.20.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   locate-path@6.0.0:
     dependencies:
       p-locate: 5.0.0
@@ -4409,6 +4436,8 @@ snapshots:
   ws@7.5.10: {}
 
   ws@8.18.0: {}
+
+  ws@8.20.0: {}
 
   xtend@4.0.2: {}
 

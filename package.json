@@ -17,6 +17,7 @@
 		"discord.js": "^14.17.3",
 		"dotenv": "^16.4.7",
 		"googleapis": "^144.0.0",
+		"lavalink-client": "^2.9.11",
 		"node-cron": "^3.0.3",
 		"pg": "^8.13.1",
 		"typeorm": "^0.3.20"
