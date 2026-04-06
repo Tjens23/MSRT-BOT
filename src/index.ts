@@ -26,7 +26,7 @@ export const client = new SapphireClient({
 });
 
 // Import lavalink after client is created (it depends on client)
-import './utils/lavalink';
+import './utils/lavalink/lavalink';
 
 // Send raw voice data to Lavalink
 client.on('raw', (data: any) => {
