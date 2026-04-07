@@ -57,7 +57,7 @@ services:
 
   # Lavalink Audio Server
   lavalink:
-    image: openjdk:17-slim
+    image: openjdk:17.0.1-jdk-slim
     container_name: msrt-bot-lavalink
     restart: unless-stopped
     working_dir: /app
