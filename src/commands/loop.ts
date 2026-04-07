@@ -35,7 +35,6 @@ export default class LoopCommand extends Command {
 			return message.reply(`Loop mode set to **${newMode}**.`);
 		}
 
-		// Set specific mode
 		const lowerMode = mode.toLowerCase();
 
 		switch (lowerMode) {
