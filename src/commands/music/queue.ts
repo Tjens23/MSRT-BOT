@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command, CommandOptions } from '@sapphire/framework';
 import { EmbedBuilder, Message } from 'discord.js';
-import { client } from '..';
+import { client } from '../..';
 
 @ApplyOptions<CommandOptions>({
 	name: 'queue',

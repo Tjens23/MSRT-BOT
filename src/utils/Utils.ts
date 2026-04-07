@@ -1,10 +1,10 @@
-import { 
-	ButtonInteraction, 
-	ChannelType, 
-	PermissionFlagsBits, 
-	ModalBuilder, 
-	TextInputBuilder, 
-	TextInputStyle, 
+import {
+	ButtonInteraction,
+	ChannelType,
+	PermissionFlagsBits,
+	ModalBuilder,
+	TextInputBuilder,
+	TextInputStyle,
 	ActionRowBuilder,
 	ModalSubmitInteraction,
 	EmbedBuilder,
@@ -20,6 +20,17 @@ import LOATicket from '../database/entities/LOATicket';
 import { TicketTypes } from './enums/TicketTypes';
 import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { database } from '../database';
+
+export interface UserServerTime {
+	userId: string;
+	username: string;
+	joinedDate: Date | null;
+	timeInServer: {
+		total: number;
+		days: number;
+		formatted: string;
+	} | null;
+}
 
 export const trimArray = (arr: any, maxLen = 10) => {
 	if (arr.length > maxLen) {
@@ -66,9 +77,7 @@ export async function handleButton(interaction: ButtonInteraction) {
 	// Handle different ticket types with modals
 	switch (ticketType) {
 		case TicketTypes.ENLISTMENT: {
-			const modal = new ModalBuilder()
-				.setCustomId('enlistment_modal')
-				.setTitle('MSRT Enlistment Application');
+			const modal = new ModalBuilder().setCustomId('enlistment_modal').setTitle('MSRT Enlistment Application');
 
 			// Callsign input
 			const callsignInput = new TextInputBuilder()
@@ -124,9 +133,7 @@ export async function handleButton(interaction: ButtonInteraction) {
 		}
 
 		case TicketTypes.LOA: {
-			const modal = new ModalBuilder()
-				.setCustomId('loa_modal')
-				.setTitle('MSRT Leave of Absence Request');
+			const modal = new ModalBuilder().setCustomId('loa_modal').setTitle('MSRT Leave of Absence Request');
 
 			// Start date input
 			const startDateInput = new TextInputBuilder()
@@ -212,7 +219,7 @@ export async function handleLOAModal(interaction: ModalSubmitInteraction) {
 }
 
 async function createTicketChannel(
-	interaction: ButtonInteraction | ModalSubmitInteraction, 
+	interaction: ButtonInteraction | ModalSubmitInteraction,
 	ticketType: TicketTypes,
 	data?: {
 		callsign?: string;
@@ -246,11 +253,7 @@ async function createTicketChannel(
 		},
 		{
 			id: interaction.user.id,
-			allow: [
-				PermissionFlagsBits.ViewChannel,
-				PermissionFlagsBits.SendMessages,
-				PermissionFlagsBits.ReadMessageHistory
-			]
+			allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory]
 		}
 	];
 
@@ -280,7 +283,7 @@ async function createTicketChannel(
 	}
 
 	// Find or create user
-	let user = await User.findOne({ 
+	let user = await User.findOne({
 		where: { userId: interaction.user.id },
 		relations: ['tickets']
 	});
@@ -299,9 +302,7 @@ async function createTicketChannel(
 	}
 
 	// Check if user already has an open ticket of the same type
-	const existingTicket = user.tickets?.find(ticket => 
-		ticket.ticketType === ticketType && !ticket.closed
-	);
+	const existingTicket = user.tickets?.find((ticket) => ticket.ticketType === ticketType && !ticket.closed);
 
 	if (existingTicket) {
 		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
@@ -320,9 +321,9 @@ async function createTicketChannel(
 			enlistment.ticketType = TicketTypes.ENLISTMENT;
 			enlistment.closed = false;
 			enlistment.title = `Enlistment Ticket - ${data?.callsign || interaction.user.username}`;
-			enlistment.description = data ?
-				`**Age:** ${data.age}\n**Timezone:** ${data.timezone}\n**Found MSRT through:** ${data.foundOut}\n**Game Preference:** ${data.game}` :
-				'New enlistment request';
+			enlistment.description = data
+				? `**Age:** ${data.age}\n**Timezone:** ${data.timezone}\n**Found MSRT through:** ${data.foundOut}\n**Game Preference:** ${data.game}`
+				: 'New enlistment request';
 			enlistment.timezone = data?.timezone || 'Unknown';
 			enlistment.game = data?.game || 'Unknown';
 			ticket = enlistment;
@@ -403,13 +404,9 @@ async function createTicketChannel(
 			.setLabel('📜 View Transcript')
 			.setStyle(ButtonStyle.Primary);
 
-		const CloseTicketButton = new ButtonBuilder()
-			.setCustomId(`close_${ticket.id}`)
-			.setLabel('🔒 Close Ticket')
-		.setStyle(ButtonStyle.Danger);
+		const CloseTicketButton = new ButtonBuilder().setCustomId(`close_${ticket.id}`).setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger);
 
-		const actionRow = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(transcriptButton, CloseTicketButton);
+		const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(transcriptButton, CloseTicketButton);
 
 		const enlistmentEmbed = new EmbedBuilder()
 			.setColor('#00ff00')
@@ -424,12 +421,12 @@ async function createTicketChannel(
 			)
 			.setThumbnail(interaction.user.displayAvatarURL())
 			.setTimestamp()
-			.setFooter({ 
+			.setFooter({
 				text: `Ticket ID: ${ticket.id} | User ID: ${interaction.user.id}`,
 				iconURL: interaction.guild?.iconURL() || undefined
 			});
 
-		await channel.send({ 
+		await channel.send({
 			content: `<@${interaction.user.id}> Your enlistment application has been submitted!`,
 			embeds: [enlistmentEmbed],
 			components: [actionRow]
@@ -437,7 +434,8 @@ async function createTicketChannel(
 
 		// Send additional instructions
 		await channel.send({
-			content: `📝 **Next Steps:**\n` +
+			content:
+				`📝 **Next Steps:**\n` +
 				`• Our staff will review your application\n` +
 				`• Please be patient as we have staff across multiple timezones\n` +
 				`• A staff member will be with you shortly\n` +
@@ -451,13 +449,9 @@ async function createTicketChannel(
 			.setLabel('📜 View Transcript')
 			.setStyle(ButtonStyle.Primary);
 
-		const closeTicketButton = new ButtonBuilder()
-			.setCustomId(`close_${ticket.id}`)
-			.setLabel('🔒 Close Ticket')
-			.setStyle(ButtonStyle.Danger);
+		const closeTicketButton = new ButtonBuilder().setCustomId(`close_${ticket.id}`).setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger);
 
-		const actionRow = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(transcriptButton, closeTicketButton);
+		const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(transcriptButton, closeTicketButton);
 
 		// Calculate duration with proper type checking
 		const startDate = data.startDate;
@@ -489,7 +483,8 @@ async function createTicketChannel(
 
 		// Send additional instructions for LOA
 		await channel.send({
-			content: `📋 **LOA Request Information:**\n` +
+			content:
+				`📋 **LOA Request Information:**\n` +
 				`• Staff will review your request shortly\n` +
 				`• Please ensure your dates are accurate\n` +
 				`• You will be notified once your LOA is approved/denied\n` +
@@ -503,13 +498,9 @@ async function createTicketChannel(
 			.setLabel('📜 View Transcript')
 			.setStyle(ButtonStyle.Primary);
 
-		const closeTicketButton = new ButtonBuilder()
-			.setCustomId(`close_${ticket.id}`)
-			.setLabel('🔒 Close Ticket')
-			.setStyle(ButtonStyle.Danger);
+		const closeTicketButton = new ButtonBuilder().setCustomId(`close_${ticket.id}`).setLabel('🔒 Close Ticket').setStyle(ButtonStyle.Danger);
 
-		const actionRow = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(transcriptButton, closeTicketButton);
+		const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(transcriptButton, closeTicketButton);
 
 		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
 		const ticketEmbed = new EmbedBuilder()
@@ -523,12 +514,12 @@ async function createTicketChannel(
 			)
 			.setThumbnail(interaction.user.displayAvatarURL())
 			.setTimestamp()
-			.setFooter({ 
+			.setFooter({
 				text: `Ticket ID: ${ticket.id}`,
 				iconURL: interaction.guild?.iconURL() || undefined
 			});
 
-		await channel.send({ 
+		await channel.send({
 			content: `<@${interaction.user.id}> Your ticket has been created!`,
 			embeds: [ticketEmbed],
 			components: [actionRow]
@@ -561,7 +552,7 @@ export async function getUserServerTime(userId: string) {
 	const joinedDate = user.activity.joinedServer;
 	const now = new Date();
 	const timeInServer = now.getTime() - joinedDate.getTime();
-	
+
 	// Convert to readable format
 	const days = Math.floor(timeInServer / (1000 * 60 * 60 * 24));
 	const hours = Math.floor((timeInServer % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -583,7 +574,7 @@ export async function getUserServerTime(userId: string) {
  * Get all users and their server time statistics
  * @returns Array of users with their server time data
  */
-export async function getAllUsersServerTime() {
+export async function getAllUsersServerTime(): Promise<UserServerTime[]> {
 	// Initialize database if not connected
 	if (!database.isInitialized) {
 		await database.initialize();
@@ -593,35 +584,37 @@ export async function getAllUsersServerTime() {
 		relations: ['activity']
 	});
 
-	return users.map(user => {
-		if (!user.activity || !user.activity.joinedServer) {
+	return users
+		.map((user) => {
+			if (!user.activity || !user.activity.joinedServer) {
+				return {
+					userId: user.userId,
+					username: user.username,
+					joinedDate: null,
+					timeInServer: null
+				};
+			}
+
+			const joinedDate = user.activity.joinedServer;
+			const now = new Date();
+			const timeInServer = now.getTime() - joinedDate.getTime();
+			const days = Math.floor(timeInServer / (1000 * 60 * 60 * 24));
+
 			return {
 				userId: user.userId,
 				username: user.username,
-				joinedDate: null,
-				timeInServer: null
+				joinedDate,
+				timeInServer: {
+					total: timeInServer,
+					days,
+					formatted: `${days} days`
+				}
 			};
-		}
-
-		const joinedDate = user.activity.joinedServer;
-		const now = new Date();
-		const timeInServer = now.getTime() - joinedDate.getTime();
-		const days = Math.floor(timeInServer / (1000 * 60 * 60 * 24));
-
-		return {
-			userId: user.userId,
-			username: user.username,
-			joinedDate,
-			timeInServer: {
-				total: timeInServer,
-				days,
-				formatted: `${days} days`
-			}
-		};
-	}).sort((a, b) => {
-		if (!a.timeInServer || !b.timeInServer) return 0;
-		return b.timeInServer.total - a.timeInServer.total; // Sort by most time in server
-	});
+		})
+		.sort((a, b) => {
+			if (!a.timeInServer || !b.timeInServer) return 0;
+			return b.timeInServer.total - a.timeInServer.total; // Sort by most time in server
+		});
 }
 
 /**
@@ -640,8 +633,8 @@ export async function getRankStatistics(roleId: string) {
 		relations: ['user']
 	});
 
-	const activeRecords = allRankRecords.filter(record => record.isActive);
-	const inactiveRecords = allRankRecords.filter(record => !record.isActive);
+	const activeRecords = allRankRecords.filter((record) => record.isActive);
+	const inactiveRecords = allRankRecords.filter((record) => !record.isActive);
 
 	// Calculate average time in rank for those who left the rank
 	let averageTimeInRank = 0;
@@ -663,11 +656,13 @@ export async function getRankStatistics(roleId: string) {
 		currentlyHolding: activeRecords.length,
 		totalWhoLeft: inactiveRecords.length,
 		averageTimeInRank: Math.floor(averageTimeInRank / (1000 * 60 * 60 * 24)), // days
-		longestServing: longestServing ? {
-			user: longestServing.user,
-			timeInRank: longestServing.getFormattedDuration(),
-			since: longestServing.receivedAt
-		} : null
+		longestServing: longestServing
+			? {
+					user: longestServing.user,
+					timeInRank: longestServing.getFormattedDuration(),
+					since: longestServing.receivedAt
+				}
+			: null
 	};
 }
 
@@ -682,7 +677,7 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 
 	// Extract ticket ID from custom ID
 	const ticketId = parseInt(interaction.customId.split('_')[1]);
-	
+
 	if (!ticketId) {
 		return interaction.reply({ content: 'Invalid ticket ID.', ephemeral: true });
 	}
@@ -739,7 +734,7 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 					if (embed.title) transcriptContent += `Title: ${embed.title}\n`;
 					if (embed.description) transcriptContent += `Description: ${embed.description}\n`;
 					if (embed.fields && embed.fields.length > 0) {
-						embed.fields.forEach(field => {
+						embed.fields.forEach((field) => {
 							transcriptContent += `${field.name}: ${field.value}\n`;
 						});
 					}
@@ -787,7 +782,6 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 		});
 
 		return; // Success path
-
 	} catch (error) {
 		console.error('Error generating transcript:', error);
 		return interaction.editReply({
@@ -807,7 +801,7 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 
 	// Extract ticket ID from custom ID
 	const ticketId = parseInt(interaction.customId.split('_')[1]);
-	
+
 	if (!ticketId) {
 		return interaction.reply({ content: 'Invalid ticket ID.', ephemeral: true });
 	}
@@ -831,8 +825,8 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 		const hasStaffPermission = interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels);
 
 		if (!isTicketOwner && !hasStaffPermission) {
-			return interaction.editReply({ 
-				content: 'You do not have permission to close this ticket. Only the ticket owner or staff members can close tickets.' 
+			return interaction.editReply({
+				content: 'You do not have permission to close this ticket. Only the ticket owner or staff members can close tickets.'
 			});
 		}
 
@@ -841,13 +835,9 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 		await ticket.save();
 
 		// Create closed ticket embed with delete button
-		const deleteButton = new ButtonBuilder()
-			.setCustomId(`delete_${ticket.id}`)
-			.setLabel('🗑️ Delete Channel')
-			.setStyle(ButtonStyle.Danger);
+		const deleteButton = new ButtonBuilder().setCustomId(`delete_${ticket.id}`).setLabel('🗑️ Delete Channel').setStyle(ButtonStyle.Danger);
 
-		const deleteActionRow = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(deleteButton);
+		const deleteActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton);
 
 		const closedEmbed = new EmbedBuilder()
 			.setColor('#ff0000')
@@ -859,14 +849,14 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 				{ name: '📅 Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
 			)
 			.setTimestamp()
-			.setFooter({ 
+			.setFooter({
 				text: `Closed by ${interaction.user.username} • Channel will auto-delete in 5 minutes`,
 				iconURL: interaction.user.displayAvatarURL()
 			});
 
 		// Update channel with closed status and delete button
 		const channel = interaction.channel as TextChannel;
-		await channel.send({ 
+		await channel.send({
 			embeds: [closedEmbed],
 			components: [deleteActionRow]
 		});
@@ -888,8 +878,8 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 			console.error('Error updating permissions:', error);
 		}
 
-		await interaction.editReply({ 
-			content: `✅ Ticket #${ticket.id} has been closed successfully.` 
+		await interaction.editReply({
+			content: `✅ Ticket #${ticket.id} has been closed successfully.`
 		});
 
 		// Auto-delete channel after 5 minutes (gives time for manual deletion or transcript generation)
@@ -897,7 +887,7 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 			try {
 				// Check if the channel still exists and is accessible
 				const channelToDelete = await interaction.guild?.channels.fetch(channel.id).catch(() => null);
-				
+
 				if (channelToDelete) {
 					await channelToDelete.delete();
 					console.log(`Auto-deleted closed ticket channel: ${channel.name} (Ticket #${ticket.id})`);
@@ -911,7 +901,6 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 		}, 300000); // Delete after 5 minutes (300,000ms)
 
 		return; // Success path
-
 	} catch (error) {
 		console.error('Error closing ticket:', error);
 		return interaction.editReply({ content: 'An error occurred while closing the ticket.' });
@@ -931,9 +920,10 @@ export async function handleDeleteChannelButton(interaction: ButtonInteraction) 
 	const hasStaffPermission = interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels);
 
 	if (!hasStaffPermission) {
-		return interaction.reply({ 
-			content: 'You do not have permission to delete this channel. Only staff members with "Manage Channels" permission can delete ticket channels.', 
-			ephemeral: true 
+		return interaction.reply({
+			content:
+				'You do not have permission to delete this channel. Only staff members with "Manage Channels" permission can delete ticket channels.',
+			ephemeral: true
 		});
 	}
 

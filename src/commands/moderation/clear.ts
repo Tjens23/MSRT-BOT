@@ -6,6 +6,7 @@ import { PermissionFlagsBits } from 'discord.js';
 	description: 'Clears x amount of messages in the current channel',
 	name: 'clear',
 	fullCategory: ['Admin'],
+	aliases: ['purge'],
 	requiredUserPermissions: [PermissionFlagsBits.ManageMessages]
 })
 export class ClearCommand extends Command {

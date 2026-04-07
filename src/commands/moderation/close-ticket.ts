@@ -1,8 +1,8 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
 import { ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import { database } from '../database';
-import Ticket from '../database/entities/Ticket';
+import { database } from '../../database';
+import Ticket from '../../database/entities/Ticket';
 
 @ApplyOptions<Command.Options>({
 	description: 'Close the current ticket channel',

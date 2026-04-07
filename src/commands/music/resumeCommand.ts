@@ -1,15 +1,15 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptions } from '@sapphire/framework';
 import { Message } from 'discord.js';
-import { client } from '..';
+import { client } from '../..';
 
 @ApplyOptions<CommandOptions>({
-	name: 'skip',
-	aliases: ['skip'],
-	description: 'Skip the currently playing music',
+	name: 'resume',
+	aliases: ['res'],
+	description: 'Resume the currently paused music',
 	fullCategory: ['Music']
 })
-export default class SkipCommand extends Command {
+export default class ResumeCommand extends Command {
 	public override async messageRun(message: Message) {
 		const player = message.guild ? client.lavalink.getPlayer(message.guild.id) : null;
 
@@ -17,13 +17,11 @@ export default class SkipCommand extends Command {
 			return message.reply('I am not connected to a voice channel!');
 		}
 		if (player.voiceChannelId !== message.member?.voice.channelId) {
-			return message.reply('You need to be in the same voice channel as me to skip the music!');
+			return message.reply('You need to be in the same voice channel as me to resume the music!');
 		}
 		if (!player.queue.current) return message.reply('there is no music playing.');
 
-		const { title } = player.queue.current.info;
-
-		await player.skip();
-		return message.reply(`Skipped **${title}**.`);
+		await player.resume();
+		return message.reply(`Resumed queue.`);
 	}
 }

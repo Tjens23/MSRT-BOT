@@ -8,9 +8,10 @@ import {
 	Message,
 	PermissionFlagsBits
 } from 'discord.js';
-import { getUserCurrentRanks, getUserRankHistory, getRankLeaderboard } from '../utils/rankTracking';
-import { database } from '../database';
-import User from '../database/entities/User';
+import { getUserCurrentRanks, getUserRankHistory, getRankLeaderboard, LeaderboardEntry } from '../../utils/rankTracking';
+import { database } from '../../database';
+import User from '../../database/entities/User';
+import { UserRankHistory } from '../../database/entities/UserRankHistory';
 
 @ApplyOptions<Command.Options>({
 	description: 'Check rank history and time in rank for users',
@@ -77,7 +78,8 @@ export class RankTimeCommand extends Command {
 
 			const ranksText = currentRanks
 				.map(
-					(rank) => `**${rank.roleName}** - ${rank.getFormattedDuration()}\n🕐 Since: <t:${Math.floor(rank.receivedAt.getTime() / 1000)}:F>`
+					(rank: UserRankHistory) =>
+						`**${rank.roleName}** - ${rank.getFormattedDuration()}\n🕐 Since: <t:${Math.floor(rank.receivedAt.getTime() / 1000)}:F>`
 				)
 				.join('\n\n');
 
@@ -114,7 +116,7 @@ export class RankTimeCommand extends Command {
 			}
 
 			const historyText = rankHistory
-				.map((rank) => {
+				.map((rank: UserRankHistory) => {
 					const status = rank.isActive ? '🟢 **Active**' : '🔴 **Removed**';
 					const duration = rank.getFormattedDuration();
 					const received = `<t:${Math.floor(rank.receivedAt.getTime() / 1000)}:F>`;
@@ -151,7 +153,7 @@ export class RankTimeCommand extends Command {
 			}
 
 			const leaderboardText = leaderboard
-				.map((entry, index) => {
+				.map((entry: LeaderboardEntry, index: number) => {
 					const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}.`;
 					return `${medal} **${entry.user.username}** (${entry.user.callsign}) - ${entry.timeInRank}\n🕐 Since: <t:${Math.floor(entry.receivedAt.getTime() / 1000)}:F>`;
 				})
@@ -212,7 +214,7 @@ export class RankTimeCommand extends Command {
 
 				const ranksText = currentRanks
 					.map(
-						(rank) =>
+						(rank: UserRankHistory) =>
 							`**${rank.roleName}** - ${rank.getFormattedDuration()}\n🕐 Since: <t:${Math.floor(rank.receivedAt.getTime() / 1000)}:F>`
 					)
 					.join('\n\n');
@@ -258,7 +260,7 @@ export class RankTimeCommand extends Command {
 				}
 
 				const historyText = rankHistory
-					.map((rank) => {
+					.map((rank: UserRankHistory) => {
 						const status = rank.isActive ? '🟢 **Active**' : '🔴 **Removed**';
 						const duration = rank.getFormattedDuration();
 						const received = `<t:${Math.floor(rank.receivedAt.getTime() / 1000)}:F>`;
@@ -308,7 +310,7 @@ export class RankTimeCommand extends Command {
 				}
 
 				const leaderboardText = leaderboard
-					.map((entry, index) => {
+					.map((entry: LeaderboardEntry, index: number) => {
 						const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}.`;
 						return `${medal} **${entry.user.username}** (${entry.user.callsign}) - ${entry.timeInRank}\n🕐 Since: <t:${Math.floor(entry.receivedAt.getTime() / 1000)}:F>`;
 					})

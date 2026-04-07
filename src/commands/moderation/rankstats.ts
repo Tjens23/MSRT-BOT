@@ -8,7 +8,7 @@ import {
 	Message,
 	PermissionFlagsBits
 } from 'discord.js';
-import { getRankStatistics } from '../utils/Utils';
+import { getRankStatistics } from '../../utils/Utils';
 
 @ApplyOptions<Command.Options>({
 	description: 'Get detailed statistics about a specific rank',

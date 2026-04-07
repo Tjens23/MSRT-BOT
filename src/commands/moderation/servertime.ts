@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
 import { EmbedBuilder, ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, PermissionFlagsBits } from 'discord.js';
-import { getUserServerTime, getAllUsersServerTime } from '../utils/Utils';
+import { getUserServerTime, getAllUsersServerTime, UserServerTime } from '../../utils/Utils';
 
 @ApplyOptions<Command.Options>({
 	description: 'Check how long a user has been in the server',
@@ -78,7 +78,7 @@ export class ServerTimeCommand extends Command {
 
 		if (subcommand === 'leaderboard') {
 			const allUsersData = await getAllUsersServerTime();
-			const topUsers = allUsersData.filter((user) => user.timeInServer).slice(0, 10);
+			const topUsers = allUsersData.filter((user: UserServerTime) => user.timeInServer).slice(0, 10);
 
 			if (topUsers.length === 0) {
 				return interaction.reply({
@@ -88,7 +88,7 @@ export class ServerTimeCommand extends Command {
 			}
 
 			const leaderboardText = topUsers
-				.map((user, index) => {
+				.map((user: UserServerTime, index: number) => {
 					const medal = index < 3 ? ['🥇', '🥈', '🥉'][index] : `${index + 1}.`;
 					return `${medal} **${user.username}** - ${user.timeInServer?.formatted || 'Unknown'}`;
 				})

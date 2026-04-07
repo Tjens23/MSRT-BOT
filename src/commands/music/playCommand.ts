@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command, CommandOptions } from '@sapphire/framework';
 import { EmbedBuilder, Message, VoiceChannel } from 'discord.js';
-import { client } from '../index';
+import { client } from '../../index';
 
 @ApplyOptions<CommandOptions>({
 	name: 'play',

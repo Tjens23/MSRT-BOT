@@ -1,7 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
 import { Message, EmbedBuilder, TextChannel, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
-import { TACTICAL_GAMES, CASUAL_GAMES } from '../lib/gameRoles';
+import { TACTICAL_GAMES, CASUAL_GAMES } from '../../lib/gameRoles';
 
 @ApplyOptions<Command.Options>({
 	name: 'game-roles',
