@@ -47,4 +47,21 @@ export function registerLavalinkEvents(): void {
 			(channel as any).send('Queue ended. Leaving voice channel in 30 seconds...');
 		}
 	});
+
+	client.lavalink.on('trackError', (player: any, track: any, payload: any) => {
+		console.error(`[Lavalink] Track error: ${track?.info?.title}`, payload);
+		const channel = client.channels.cache.get(player.textChannelId);
+		if (channel?.isTextBased()) {
+			(channel as any).send(`Failed to play **${track?.info?.title || 'track'}**: ${payload?.exception?.message || 'Unknown error'}`);
+		}
+	});
+
+	client.lavalink.on('trackStuck', (player: any, track: any, payload: any) => {
+		console.warn(`[Lavalink] Track stuck: ${track?.info?.title}`, payload);
+		player.skip();
+	});
+
+	client.lavalink.on('playerDisconnect', (_player: any, voiceChannelId: string) => {
+		console.log(`[Lavalink] Player disconnected from ${voiceChannelId}`);
+	});
 }

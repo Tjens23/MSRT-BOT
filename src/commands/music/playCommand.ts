@@ -7,8 +7,7 @@ import { client } from '../../index';
 	name: 'play',
 	aliases: ['p'],
 	description: 'Play music from various sources',
-	fullCategory: ['Music'],
-	flags: ['sc', 'soundcloud', 'sp', 'spotify', 'yt', 'youtube']
+	fullCategory: ['Music']
 })
 export default class PlayCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
@@ -30,11 +29,7 @@ export default class PlayCommand extends Command {
 
 		if (!message.guild) return;
 
-		// Determine source based on flags or URL
-		let source: any = 'scsearch'; // Default to SoundCloud (more reliable)
-		if (args.getFlags('sc', 'soundcloud')) source = 'scsearch';
-		else if (args.getFlags('sp', 'spotify')) source = 'spsearch';
-		else if (args.getFlags('yt', 'youtube')) source = 'ytsearch';
+		const searchQuery = query.startsWith('https://') || query.startsWith('http://') ? query : { query, source: 'scsearch' as const };
 
 		// Get existing player or create new one
 		const player =
@@ -60,8 +55,7 @@ export default class PlayCommand extends Command {
 			return message.reply('You need to be in my voice channel!');
 		}
 
-		// Search for tracks - use source prefix for non-URL queries
-		const searchQuery = query.startsWith('http') ? query : { query, source };
+		// Search for tracks
 		const response = await player.search(searchQuery, message.author);
 
 		if (!response || !response.tracks?.length) {
@@ -69,13 +63,11 @@ export default class PlayCommand extends Command {
 			return message.reply(`No tracks found${errorMsg}`);
 		}
 
-		// Add tracks to queue
 		const isPlaylist = response.loadType === 'playlist';
 		const queueBefore = player.queue.tracks.length;
 
 		await player.queue.add(isPlaylist ? response.tracks : response.tracks[0]);
 
-		// Build response embed
 		const embed = new EmbedBuilder().setColor(0x5865f2);
 
 		if (isPlaylist) {
@@ -100,7 +92,6 @@ export default class PlayCommand extends Command {
 
 		await message.reply({ embeds: [embed] });
 
-		// Start playing if not already
 		if (!player.playing) {
 			await player.play(wasConnected ? { volume: 80, paused: false } : undefined);
 		}

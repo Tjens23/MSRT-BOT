@@ -35,19 +35,19 @@ client.lavalink = new LavalinkManager({
 		id: '',
 		username: 'MSRT_BOT'
 	},
-	autoSkipOnResolveError: true,
+	autoSkipOnResolveError: false,
 	emitNewSongsOnly: true,
 	playerOptions: {
 		maxErrorsPerTime: {
-			threshold: 10_000,
-			maxAmount: 3
+			threshold: 35_000,
+			maxAmount: 5
 		},
 		minAutoPlayMs: 10_000,
 		applyVolumeAsFilter: false,
 		clientBasedPositionUpdateInterval: 50,
 		defaultSearchPlatform: 'ytmsearch',
-		allowCustomSources: false,
-		volumeDecrementer: 0.75,
+		allowCustomSources: true,
+		volumeDecrementer: 1,
 		onDisconnect: {
 			autoReconnect: true,
 			destroyPlayer: false
