@@ -49,6 +49,11 @@ services:
       VOTE_CHANNEL_ID: ${VOTE_CHANNEL_ID}
       VOTE_REMINDER_ROLE: ${VOTE_REMINDER_ROLE}
 
+      LAVALINK_HOST: lavalink
+      LAVALINK_PORT: 2333
+      LAVALINK_PASSWORD: youshallnotpass
+      LAVALINK_SECURE: 'false'
+
       # Other environment variables
       NODE_ENV: production
     volumes:
