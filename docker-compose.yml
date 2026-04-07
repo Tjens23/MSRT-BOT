@@ -12,11 +12,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - '5432:5432'
     networks:
       - bot-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d msrtbot"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d msrtbot']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,6 +50,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      lavalink:
+        condition: service_started
+    networks:
+      - bot-network
+
+  # Lavalink Audio Server
+  lavalink:
+    image: openjdk:17-slim
+    container_name: msrt-bot-lavalink
+    restart: unless-stopped
+    working_dir: /app
+    command: java -jar Lavalink.jar
+    volumes:
+      - ./Lavalink.jar:/app/Lavalink.jar:ro
+      - ./application.yaml:/app/application.yml:ro
+    ports:
+      - '2333:2333'
     networks:
       - bot-network
 
