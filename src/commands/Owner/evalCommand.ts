@@ -13,9 +13,9 @@ class Type {
 
 @ApplyOptions<CommandOptions>({
 	name: 'eval',
-	description: 'Evaulate javascript',
+	description: 'Evaluate javascript',
 	fullCategory: ['Owner'],
-	preconditions: [],
+	preconditions: ['OwnerOnly'],
 	requiredUserPermissions: [PermissionFlagsBits.Administrator]
 })
 export default class EvalCommand extends Command {
