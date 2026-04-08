@@ -62,7 +62,7 @@ services:
       postgres:
         condition: service_healthy
       lavalink:
-        condition: service_started
+        condition: service_healthy
     networks:
       - bot-network
 
@@ -80,6 +80,12 @@ services:
       - '2333:2333'
     networks:
       - bot-network
+    healthcheck:
+      test: ['CMD-SHELL', "timeout 2 bash -c '</dev/tcp/localhost/2333' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   postgres_data:
