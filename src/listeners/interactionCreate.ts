@@ -4,6 +4,7 @@ import {
 	handleButton,
 	handleEnlistmentModal,
 	handleLOAModal,
+	handleSupportModal,
 	handleTranscriptButton,
 	handleCloseTicketButton,
 	handleDeleteChannelButton
@@ -23,9 +24,10 @@ export class InteractionCreateEvent extends Listener {
 		if (interaction.isButton()) {
 			// Handle ticket creation buttons
 			if (
-				interaction.customId === 'ticket_enlistment' ||
-				interaction.customId === 'ticket_staff' ||
-				interaction.customId === 'ticket_loa' ||
+				interaction.customId === 'ticket_enlistment' 	||
+				interaction.customId === 'ticket_staff' 		||
+				interaction.customId === 'ticket_support' 		||
+				interaction.customId === 'ticket_loa' 			||
 				interaction.customId === 'ticket_hr'
 			) {
 				await handleButton(interaction);
@@ -50,7 +52,9 @@ export class InteractionCreateEvent extends Listener {
 				await handleEnlistmentModal(interaction);
 			} else if (interaction.customId === 'loa_modal') {
 				await handleLOAModal(interaction);
-			}
+			} else if (interaction.customId === 'support_modal') {  // add this
+        		await handleSupportModal(interaction);
+    }
 		}
 
 		// Handle select menu interactions for game roles
