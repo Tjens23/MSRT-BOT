@@ -1,14 +1,14 @@
-import
-	'dotenv/config';
+import 'dotenv/config';
 import { DataSource } from 'typeorm';
-import EnlistmentTicket from "./entities/EnlistmentTicket";
-import User from "./entities/User";
+import EnlistmentTicket from './entities/EnlistmentTicket';
+import User from './entities/User';
 import { UserActivity } from './entities/UserActivity';
 import { UserRankHistory } from './entities/UserRankHistory';
 import Ticket from './entities/Ticket';
 import LOATicket from './entities/LOATicket';
 import HRTicket from './entities/HRTicket';
 import Guild from './entities/Guild';
+import WarnEntity from './entities/WarnEntity';
 import type { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 
 const dbHost = process.env.DB_HOST ?? '127.0.0.1';
@@ -29,7 +29,7 @@ function createDatabaseSource(host: string): DataSource {
 		database: dbName,
 		synchronize: true,
 		logging: true,
-		entities: [EnlistmentTicket, User, UserActivity, UserRankHistory, Ticket, HRTicket, LOATicket, Guild]
+		entities: [EnlistmentTicket, User, UserActivity, UserRankHistory, Ticket, HRTicket, LOATicket, Guild, WarnEntity]
 	};
 
 	return new DataSource(options);

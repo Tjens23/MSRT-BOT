@@ -1,25 +1,29 @@
 import { OneToOne, OneToMany, Entity, BaseEntity, PrimaryColumn, Column } from 'typeorm';
-import { UserActivity } from "./UserActivity";
+import { UserActivity } from './UserActivity';
 import Ticket from './Ticket';
 import { UserRankHistory } from './UserRankHistory';
+import WarnEntity from './WarnEntity';
 
 @Entity()
 export default class User extends BaseEntity {
-    @PrimaryColumn({ type: 'varchar', unique: true })
-    userId!: string;
+	@PrimaryColumn({ type: 'varchar', unique: true })
+	userId!: string;
 
-    @Column({ type: 'varchar' })
-    username!: string;
+	@Column({ type: 'varchar' })
+	username!: string;
 
-    @Column({ type: 'varchar', unique: true })
-    callsign!: string;
+	@Column({ type: 'varchar', unique: true })
+	callsign!: string;
 
-    @OneToMany(() => Ticket, (ticket) => ticket.user)
-    tickets!: Ticket[];
+	@OneToMany(() => Ticket, (ticket) => ticket.user)
+	tickets!: Ticket[];
 
-    @OneToOne(() => UserActivity, (activity) => activity.user)
-    activity!: UserActivity;
+	@OneToOne(() => UserActivity, (activity) => activity.user)
+	activity!: UserActivity;
 
-    @OneToMany(() => UserRankHistory, (rankHistory) => rankHistory.user)
-    rankHistory!: UserRankHistory[];
+	@OneToMany(() => UserRankHistory, (rankHistory) => rankHistory.user)
+	rankHistory!: UserRankHistory[];
+
+	@OneToMany(() => WarnEntity, (warn) => warn.user)
+	warns!: WarnEntity[];
 }
