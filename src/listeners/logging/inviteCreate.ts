@@ -13,10 +13,13 @@ export class InviteCreateListener extends Listener {
 	public async run(invite: Invite): Promise<void> {
 		if (!invite.guild) return;
 
+		const guild = invite.client.guilds.cache.get(invite.guild.id) ?? (await invite.client.guilds.fetch(invite.guild.id).catch(() => null));
+		if (!guild) return;
+
 		const expiresAt = invite.expiresAt ? `<t:${Math.floor(invite.expiresAt.getTime() / 1000)}:R>` : 'Never';
 
 		await sendAuditLog({
-			guild: invite.guild,
+			guild,
 			eventType: 'INVITE_CREATE',
 			title: 'Invite Created',
 			fields: [

@@ -1,5 +1,5 @@
 import { Listener } from '@sapphire/framework';
-import { Invite } from 'discord.js';
+import { Guild, Invite } from 'discord.js';
 import { sendAuditLog } from '../../utils/auditLogger';
 
 export class InviteDeleteListener extends Listener {
@@ -13,8 +13,12 @@ export class InviteDeleteListener extends Listener {
 	public async run(invite: Invite): Promise<void> {
 		if (!invite.guild) return;
 
+		const guild = invite.guild instanceof Guild ? invite.guild : await this.container.client.guilds.fetch(invite.guild.id).catch(() => null);
+
+		if (!guild) return;
+
 		await sendAuditLog({
-			guild: invite.guild,
+			guild,
 			eventType: 'INVITE_DELETE',
 			title: 'Invite Deleted',
 			fields: [
