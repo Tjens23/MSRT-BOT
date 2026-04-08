@@ -1,9 +1,11 @@
 import { GuildMember, Role } from 'discord.js';
-import { database } from '../database';
 import User from '../database/entities/User';
 import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { excludedRoleIds } from './excludeRoleIds';
-import { getRankRoleIds } from './rankRoleIds';
+
+// Role ID thresholds - ranks are roles BETWEEN these two in hierarchy
+const RANK_UPPER_THRESHOLD_ROLE_ID = '1100345563876163705'; // Must be below this
+const RANK_LOWER_THRESHOLD_ROLE_ID = '1100348729497751552'; // Must be above this
 
 export interface LeaderboardEntry {
 	user: User;
@@ -13,17 +15,26 @@ export interface LeaderboardEntry {
 }
 
 /**
+ * Check if a role is a rank (between upper and lower threshold roles in hierarchy)
+ */
+export const isRankRole = (role: Role, guild: GuildMember['guild']): boolean => {
+	const upperThreshold = guild.roles.cache.get(RANK_UPPER_THRESHOLD_ROLE_ID);
+	const lowerThreshold = guild.roles.cache.get(RANK_LOWER_THRESHOLD_ROLE_ID);
+	if (!upperThreshold || !lowerThreshold) return false;
+
+	// Role must be:
+	// - Below the upper threshold (lower position number)
+	// - Above the lower threshold (higher position number)
+	return role.position < upperThreshold.position && role.position > lowerThreshold.position && role.id !== guild.id;
+};
+
+/**
  * Track rank changes for a user
  * @param member - The guild member whose ranks to track
  * @param oldRoles - Previous roles (for role updates)
  * @param newRoles - Current roles (for role updates)
  */
 export const trackRankChanges = async (member: GuildMember, oldRoles?: Role[], newRoles?: Role[]) => {
-	// Initialize database if not connected
-	if (!database.isInitialized) {
-		await database.initialize();
-	}
-
 	try {
 		// Get or create user
 		let user = await User.findOne({
@@ -41,12 +52,11 @@ export const trackRankChanges = async (member: GuildMember, oldRoles?: Role[], n
 
 		const currentRoles = member.roles.cache;
 		const excludedRoles = await excludedRoleIds();
-		const rankRoleIds = await getRankRoleIds();
 
 		// If this is initial tracking (no old roles provided), record current ranks
 		if (!oldRoles && !newRoles) {
 			for (const [roleId, role] of currentRoles) {
-				if (rankRoleIds.includes(roleId) && !excludedRoles.includes(roleId)) {
+				if (isRankRole(role, member.guild) && !excludedRoles.includes(roleId)) {
 					// Check if we already have an active record for this role
 					const existingRecord = await UserRankHistory.findOne({
 						where: {
@@ -76,40 +86,36 @@ export const trackRankChanges = async (member: GuildMember, oldRoles?: Role[], n
 		if (oldRoles && newRoles) {
 			const oldRoleIds = oldRoles.map((role) => role.id);
 			const newRoleIds = newRoles.map((role) => role.id);
-			const rankRoleIds = await getRankRoleIds();
 
 			// Find added ranks
-			const addedRankIds = newRoleIds.filter(
-				(roleId) => !oldRoleIds.includes(roleId) && rankRoleIds.includes(roleId) && !excludedRoles.includes(roleId)
+			const addedRoles = newRoles.filter(
+				(role) => !oldRoleIds.includes(role.id) && isRankRole(role, member.guild) && !excludedRoles.includes(role.id)
 			);
 
 			// Find removed ranks
-			const removedRankIds = oldRoleIds.filter(
-				(roleId) => !newRoleIds.includes(roleId) && rankRoleIds.includes(roleId) && !excludedRoles.includes(roleId)
+			const removedRoles = oldRoles.filter(
+				(role) => !newRoleIds.includes(role.id) && isRankRole(role, member.guild) && !excludedRoles.includes(role.id)
 			);
 
 			// Process added ranks
-			for (const roleId of addedRankIds) {
-				const role = member.guild.roles.cache.get(roleId);
-				if (role) {
-					const rankHistory = new UserRankHistory();
-					rankHistory.user = user;
-					rankHistory.roleId = roleId;
-					rankHistory.roleName = role.name;
-					rankHistory.receivedAt = new Date();
-					rankHistory.isActive = true;
-					await rankHistory.save();
+			for (const role of addedRoles) {
+				const rankHistory = new UserRankHistory();
+				rankHistory.user = user;
+				rankHistory.roleId = role.id;
+				rankHistory.roleName = role.name;
+				rankHistory.receivedAt = new Date();
+				rankHistory.isActive = true;
+				await rankHistory.save();
 
-					console.log(`Rank added: ${member.user.username} received ${role.name}`);
-				}
+				console.log(`Rank added: ${member.user.username} received ${role.name}`);
 			}
 
 			// Process removed ranks
-			for (const roleId of removedRankIds) {
+			for (const role of removedRoles) {
 				const activeRecord = await UserRankHistory.findOne({
 					where: {
 						user: { userId: member.user.id },
-						roleId: roleId,
+						roleId: role.id,
 						isActive: true
 					}
 				});
@@ -134,10 +140,6 @@ export const trackRankChanges = async (member: GuildMember, oldRoles?: Role[], n
  * @returns Array of active rank records
  */
 export const getUserCurrentRanks = async (userId: string) => {
-	if (!database.isInitialized) {
-		await database.initialize();
-	}
-
 	return await UserRankHistory.find({
 		where: {
 			user: { userId },
@@ -154,10 +156,6 @@ export const getUserCurrentRanks = async (userId: string) => {
  * @returns Array of all rank records (active and inactive)
  */
 export const getUserRankHistory = async (userId: string) => {
-	if (!database.isInitialized) {
-		await database.initialize();
-	}
-
 	return await UserRankHistory.find({
 		where: {
 			user: { userId }
@@ -174,10 +172,6 @@ export const getUserRankHistory = async (userId: string) => {
  * @returns Array of users sorted by time in rank
  */
 export const getRankLeaderboard = async (roleId: string, limit: number = 10): Promise<LeaderboardEntry[]> => {
-	if (!database.isInitialized) {
-		await database.initialize();
-	}
-
 	const activeRanks = await UserRankHistory.find({
 		where: {
 			roleId,
