@@ -1,5 +1,5 @@
 import { Listener } from '@sapphire/framework';
-import { ChannelType, Colors, EmbedBuilder, GuildMember, Role, TextChannel } from 'discord.js';
+import { ChannelType, Colors, EmbedBuilder, GuildMember, TextChannel } from 'discord.js';
 import { database } from '../database';
 import User from '../database/entities/User';
 import { UserActivity } from '../database/entities/UserActivity';
