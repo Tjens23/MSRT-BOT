@@ -21,7 +21,7 @@ export class Joinevent extends Listener {
 
 		// Save user join date to database
 		try {
-			let user = await User.findOne({ 
+			let user = await User.findOne({
 				where: { userId: member.user.id },
 				relations: ['activity']
 			});
@@ -59,12 +59,12 @@ export class Joinevent extends Listener {
 		// Track initial ranks for the new member
 		await trackRankChanges(member);
 
-		let welcomeChannel = member.guild.channels.cache.find(
-			(channel) => channel.type === ChannelType.GuildText && channel.name === 'welcome'
-		) as TextChannel | undefined;
-		const logChannel = member.guild.channels.cache.find(
-			(channel) => channel.type === ChannelType.GuildText && channel.name === 'logs'
-		) as TextChannel | undefined;
+		let welcomeChannel = member.guild.channels.cache.find((channel) => channel.type === ChannelType.GuildText && channel.name === 'welcome') as
+			| TextChannel
+			| undefined;
+		const logChannel = member.guild.channels.cache.find((channel) => channel.type === ChannelType.GuildText && channel.name === 'logs') as
+			| TextChannel
+			| undefined;
 
 		if (!welcomeChannel) {
 			if (logChannel) {
@@ -99,10 +99,22 @@ export class Joinevent extends Listener {
 
 		await welcomeChannel.send({ embeds: [welcomeEmbed] });
 
-		const rolesToAdd: Array<Role> = [];
+		const roleIdsToAdd = [
+			'1329257834734555226',
+			'1100345563876163705',
+			'1100348729497751552',
+			'1021665141164626001',
+			'1100346569477345390',
+			'1100346772854931537',
+			'1100346987091603467',
+			'1131329124338761919'
+		];
 
-    rolesToAdd.forEach((role: Role) => {
-			member.roles.add(role.id);
-		});
+		try {
+			await member.roles.add(roleIdsToAdd);
+			this.container.logger.info(`Added ${roleIdsToAdd.length} roles to new member ${member.user.tag}`);
+		} catch (error) {
+			this.container.logger.error(`Failed to add roles to ${member.user.tag}:`, error);
+		}
 	}
 }
