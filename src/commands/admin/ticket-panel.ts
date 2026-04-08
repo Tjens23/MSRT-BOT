@@ -16,6 +16,8 @@ export class EnlistmentCommand extends Command {
 		const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
 			new ButtonBuilder().setCustomId('ticket_enlistment').setLabel('🪖 Enlistment').setStyle(ButtonStyle.Primary),
 			new ButtonBuilder().setCustomId('ticket_hr').setLabel('🛠 HR ticket').setStyle(ButtonStyle.Secondary),
+			new ButtonBuilder().setCustomId('ticket_staff').setLabel('Staff ticket').setStyle(ButtonStyle.Secondary),
+			new ButtonBuilder().setCustomId('ticket_support').setLabel('🛠 Support ticket').setStyle(ButtonStyle.Secondary),
 			new ButtonBuilder().setCustomId('ticket_loa').setLabel('📆 LOA').setStyle(ButtonStyle.Secondary)
 		);
 		const embed = new EmbedBuilder()
@@ -26,6 +28,7 @@ export class EnlistmentCommand extends Command {
 				'Submit an Enlistment Ticket today! \nDo understand our staff are on a wide range of time zones from EU to NA; we aim to process your ticket as soon as possible.\n\n' +
 					'🪖 **Enlistment** - for enlisting in the server\n' +
 					'🛠 **HR ticket** - anything regarding HR\n' +
+					'🛠 **Support ticket** - Support for mods\n' +
 					'📆 **LOA** - for when you need to go on LOA'
 			)
 			.setFooter({ iconURL: message.guild!.members.me?.displayAvatarURL().toString(), text: message.guild!.name });

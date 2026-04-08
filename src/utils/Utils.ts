@@ -15,6 +15,7 @@ import {
 import User from '../database/entities/User';
 import Ticket from '../database/entities/Ticket';
 import EnlistmentTicket from '../database/entities/EnlistmentTicket';
+import SupportTicket from '../database/entities/SupportTicket';
 import HRTicket from '../database/entities/HRTicket';
 import LOATicket from '../database/entities/LOATicket';
 import { TicketTypes } from './enums/TicketTypes';
@@ -58,6 +59,7 @@ export const capitalise = (string: any) => {
 const TICKET_TYPE_MAP = {
 	ticket_enlistment: TicketTypes.ENLISTMENT,
 	ticket_staff: TicketTypes.STAFF,
+	ticket_support: TicketTypes.SUPPORT,
 	ticket_loa: TicketTypes.LOA,
 	ticket_hr: TicketTypes.HR
 } as const;
@@ -130,6 +132,22 @@ export async function handleButton(interaction: ButtonInteraction) {
 			modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow, fifthActionRow);
 
 			return await interaction.showModal(modal);
+		}
+		
+		case TicketTypes.SUPPORT: {
+			const modal = new ModalBuilder().setCustomId('support_modal').setTitle('MSRT Help Desk');
+
+			const issue = new TextInputBuilder()
+				.setCustomId('issue')
+				.setLabel('What issue are you experiencing?')
+				.setStyle(TextInputStyle.Paragraph)
+				.setRequired(true)
+				.setMaxLength(500);
+			
+			modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(issue));
+
+			return await interaction.showModal(modal);
+
 		}
 
 		case TicketTypes.LOA: {
@@ -218,6 +236,16 @@ export async function handleLOAModal(interaction: ModalSubmitInteraction) {
 	});
 }
 
+export async function handleSupportModal(interaction: ModalSubmitInteraction) {
+    if (!interaction.guild) {
+        return interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+    }
+
+    const issue = interaction.fields.getTextInputValue('issue');
+
+    return await createTicketChannel(interaction, TicketTypes.SUPPORT, { issue });
+}
+
 async function createTicketChannel(
 	interaction: ButtonInteraction | ModalSubmitInteraction,
 	ticketType: TicketTypes,
@@ -230,6 +258,7 @@ async function createTicketChannel(
 		startDate?: string;
 		endDate?: string;
 		reason?: string;
+		issue?: string;
 	}
 ) {
 	if (!interaction.guild) {
@@ -364,6 +393,17 @@ async function createTicketChannel(
 			ticket = loaTicket;
 			break;
 
+		case TicketTypes.SUPPORT:
+			const supportTicket = new SupportTicket();
+			supportTicket.user = user;
+			supportTicket.ticketType = TicketTypes.SUPPORT;
+			supportTicket.closed = false;
+			supportTicket.title = `Support Ticket - ${interaction.user.username}`;
+			supportTicket.description = data?.issue || 'New support request';
+			supportTicket.issue = data?.issue || 'Unknown';
+			ticket = supportTicket;
+			break;
+
 		case TicketTypes.HR:
 			const hrTicket = new HRTicket();
 			hrTicket.user = user;
@@ -491,6 +531,49 @@ async function createTicketChannel(
 				`• Keep this channel open until your request is processed\n\n` +
 				`**Note:** Your LOA will be effective from the approved start date. 📆`
 		});
+	} else if (ticketType === TicketTypes.SUPPORT && data?.issue) {
+		// Create Support-specific embed
+	   const transcriptButton = new ButtonBuilder()
+        .setCustomId(`transcript_${ticket.id}`)
+        .setLabel('📜 View Transcript')
+        .setStyle(ButtonStyle.Primary);
+
+    const closeTicketButton = new ButtonBuilder()
+        .setCustomId(`close_${ticket.id}`)
+        .setLabel('🔒 Close Ticket')
+        .setStyle(ButtonStyle.Danger);
+
+    const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(transcriptButton, closeTicketButton);
+
+    const supportEmbed = new EmbedBuilder()
+        .setColor('#ff6b6b')
+        .setTitle('🛠️ MSRT Help Desk')
+        .setDescription(`Your support ticket has been submitted, **${interaction.user.username}**!`)
+        .addFields(
+            { name: '🔧 Issue', value: data.issue, inline: false }
+        )
+        .setThumbnail(interaction.user.displayAvatarURL())
+        .setTimestamp()
+        .setFooter({
+            text: `Ticket ID: ${ticket.id} | User ID: ${interaction.user.id}`,
+            iconURL: interaction.guild?.iconURL() || undefined
+        });
+
+    await channel.send({
+        content: `<@${interaction.user.id}> Your support ticket has been submitted!`,
+        embeds: [supportEmbed],
+        components: [actionRow]
+    });
+
+    await channel.send({
+        content:
+            `📋 **Support Ticket Information:**\n` +
+            `• Staff will review your issue shortly\n` +
+            `• Please provide any additional details if needed\n` +
+            `• Do not create duplicate tickets for the same issue\n\n` +
+            `**Note:** A staff member will be with you as soon as possible. 🛠️`
+    });
+
 	} else {
 		// For other ticket types, send a simpler embed
 		const transcriptButton = new ButtonBuilder()
