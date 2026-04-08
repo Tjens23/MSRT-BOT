@@ -3,8 +3,9 @@ import User from '../database/entities/User';
 import { UserRankHistory } from '../database/entities/UserRankHistory';
 import { excludedRoleIds } from './excludeRoleIds';
 
-// Role ID threshold - any role below this in the hierarchy is considered a rank
-const RANK_THRESHOLD_ROLE_ID = '1100345563876163705';
+// Role ID thresholds - ranks are roles BETWEEN these two in hierarchy
+const RANK_UPPER_THRESHOLD_ROLE_ID = '1100345563876163705'; // Must be below this
+const RANK_LOWER_THRESHOLD_ROLE_ID = '1100348729497751552'; // Must be above this
 
 export interface LeaderboardEntry {
 	user: User;
@@ -14,15 +15,17 @@ export interface LeaderboardEntry {
 }
 
 /**
- * Check if a role is a rank (below the threshold role in hierarchy)
+ * Check if a role is a rank (between upper and lower threshold roles in hierarchy)
  */
 export const isRankRole = (role: Role, guild: GuildMember['guild']): boolean => {
-	const thresholdRole = guild.roles.cache.get(RANK_THRESHOLD_ROLE_ID);
-	if (!thresholdRole) return false;
+	const upperThreshold = guild.roles.cache.get(RANK_UPPER_THRESHOLD_ROLE_ID);
+	const lowerThreshold = guild.roles.cache.get(RANK_LOWER_THRESHOLD_ROLE_ID);
+	if (!upperThreshold || !lowerThreshold) return false;
 
-	// Role position is lower = lower in hierarchy
-	// We want roles BELOW the threshold (lower position number)
-	return role.position < thresholdRole.position && role.id !== guild.id; // Exclude @everyone
+	// Role must be:
+	// - Below the upper threshold (lower position number)
+	// - Above the lower threshold (higher position number)
+	return role.position < upperThreshold.position && role.position > lowerThreshold.position && role.id !== guild.id;
 };
 
 /**

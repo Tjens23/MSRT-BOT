@@ -4,8 +4,9 @@ import { AuditLogEvent, Message, PermissionFlagsBits, GuildAuditLogsEntry } from
 import { UserRankHistory } from '../../database/entities/UserRankHistory';
 import User from '../../database/entities/User';
 
-// Role ID threshold - any role below this in the hierarchy is considered a rank
-const RANK_THRESHOLD_ROLE_ID = '1100345563876163705';
+// Role ID thresholds - ranks are roles BETWEEN these two in hierarchy
+const RANK_UPPER_THRESHOLD_ROLE_ID = '1100345563876163705'; // Must be below this
+const RANK_LOWER_THRESHOLD_ROLE_ID = '1100348729497751552'; // Must be above this
 
 @ApplyOptions<Command.Options>({
 	description: 'Admin command to bulk update rank history from audit logs',
@@ -22,8 +23,9 @@ export class BulkUpdateRankTimCommand extends Command {
 		const guild = message.client.guilds.cache.get(guildId);
 		if (!guild) return message.reply('❌ **Error:** Could not find the guild.');
 
-		const thresholdRole = guild.roles.cache.get(RANK_THRESHOLD_ROLE_ID);
-		if (!thresholdRole) return message.reply('❌ **Error:** Could not find the threshold role.');
+		const upperThreshold = guild.roles.cache.get(RANK_UPPER_THRESHOLD_ROLE_ID);
+		const lowerThreshold = guild.roles.cache.get(RANK_LOWER_THRESHOLD_ROLE_ID);
+		if (!upperThreshold || !lowerThreshold) return message.reply('❌ **Error:** Could not find the threshold roles.');
 
 		const statusMsg = await message.reply('🔄 Fetching audit logs and updating rank history... This may take a while.');
 
@@ -54,9 +56,10 @@ export class BulkUpdateRankTimCommand extends Command {
 					const addedRoles = this.getAddedRoles(entry);
 
 					for (const roleData of addedRoles) {
-						// Check if role is below threshold (is a rank role)
+						// Check if role is between thresholds (is a rank role)
 						const role = guild.roles.cache.get(roleData.id);
-						if (!role || role.position >= thresholdRole.position) continue;
+						if (!role) continue;
+						if (role.position >= upperThreshold.position || role.position <= lowerThreshold.position) continue;
 						if (role.id === guild.id) continue; // Skip @everyone
 
 						let user = await User.findOne({ where: { userId: targetUserId } });
@@ -94,7 +97,8 @@ export class BulkUpdateRankTimCommand extends Command {
 
 					for (const roleData of removedRoles) {
 						const role = guild.roles.cache.get(roleData.id);
-						if (!role || role.position >= thresholdRole.position) continue;
+						if (!role) continue;
+						if (role.position >= upperThreshold.position || role.position <= lowerThreshold.position) continue;
 						if (role.id === guild.id) continue;
 
 						const activeHistory = await UserRankHistory.findOne({
