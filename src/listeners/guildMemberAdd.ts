@@ -59,17 +59,17 @@ export class Joinevent extends Listener {
 		// Track initial ranks for the new member
 		await trackRankChanges(member);
 
-		let welcomeChannel = member.guild.channels.cache.find((channel) => channel.type === ChannelType.GuildText && channel.id === '1020765865005822062') as
-			| TextChannel
-			| undefined;
-
-
+		let welcomeChannel = member.guild.channels.cache.find(
+			(channel) => channel.type === ChannelType.GuildText && channel.id === '1020765865005822062'
+		) as TextChannel | undefined;
 
 		const welcomeEmbed = new EmbedBuilder()
 			.setAuthor({ name: member.user.tag, iconURL: member.user.displayAvatarURL() })
 			.setColor(Colors.Blurple)
-			.setDescription(`Welcome to ${member.guild.name}, ${member}!`);
-		
+			.setDescription(
+				`Welcome to ${member.guild.name}, ${member}!\nIf you're looking to join, submit an <#1019129936780468304> and read <#1019130052039938058>.`
+			);
+
 		if (!welcomeChannel) {
 			this.container.logger.warn(`Unable to send welcome message for ${member.user.tag}: welcome channel unavailable.`);
 			return;
@@ -90,7 +90,6 @@ export class Joinevent extends Listener {
 			try {
 				await member.roles.add(roleIdsToAdd);
 				this.container.logger.info(`Added ${roleIdsToAdd.length} roles to new member ${member.user.tag}`);
-				
 			} catch (error) {
 				this.container.logger.error(`Failed to add roles to ${member.user.tag}:`, error);
 			}
