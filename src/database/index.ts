@@ -7,6 +7,7 @@ import { UserRankHistory } from './entities/UserRankHistory';
 import Ticket from './entities/Ticket';
 import LOATicket from './entities/LOATicket';
 import HRTicket from './entities/HRTicket';
+import SupportTicket from './entities/SupportTicket';
 import Guild from './entities/Guild';
 import WarnEntity from './entities/WarnEntity';
 import type { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
@@ -29,7 +30,7 @@ function createDatabaseSource(host: string): DataSource {
 		database: dbName,
 		synchronize: true,
 		logging: true,
-		entities: [EnlistmentTicket, User, UserActivity, UserRankHistory, Ticket, HRTicket, LOATicket, Guild, WarnEntity]
+		entities: [EnlistmentTicket, User, UserActivity, UserRankHistory, Ticket, HRTicket, LOATicket, SupportTicket, Guild, WarnEntity]
 	};
 
 	return new DataSource(options);

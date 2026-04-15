@@ -52,9 +52,9 @@ export class InteractionCreateEvent extends Listener {
 				await handleEnlistmentModal(interaction);
 			} else if (interaction.customId === 'loa_modal') {
 				await handleLOAModal(interaction);
-			} else if (interaction.customId === 'support_modal') {  // add this
-        		await handleSupportModal(interaction);
-    }
+			} else if (interaction.customId === 'support_modal') {
+				await handleSupportModal(interaction);
+			}
 		}
 
 		// Handle select menu interactions for game roles

@@ -5,7 +5,7 @@ import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { GatewayIntentBits } from 'discord.js';
 import { initializeDatabase } from './database';
 import { CheckActivity } from './utils/checkActivity';
-//import { sendVoteReminder } from './utils/voteReminder';
+// import { sendVoteReminder } from './utils/voteReminder';
 
 export const client = new SapphireClient({
 	defaultPrefix: process.env.PREFIX ?? '-',
@@ -34,26 +34,25 @@ client.on('raw', (data: any) => {
 });
 
 const main = async () => {
-	try {
-		await initializeDatabase();
-		client.logger.info('Database connected');
-		client.logger.info('Logging in');
-		await client.login();
-		client.logger.info('logged in');
+    try {
+        await initializeDatabase();
+        client.logger.info('Database connected');
+        client.logger.info('Logging in');
+        await client.login();
+        client.logger.info('logged in');
 
-		// Initialize Lavalink after login
-		if (client.user) {
-			await client.lavalink.init({ id: client.user.id, username: client.user.username });
-			client.logger.info('Lavalink initialized');
-		}
+        // Initialize Lavalink after login
+        if (client.user) {
+            await client.lavalink.init({ id: client.user.id, username: client.user.username });
+            client.logger.info('Lavalink initialized');
+        }
 
-		await CheckActivity();
-		//await sendVoteReminder(process.env.VOTE_CHANNEL_ID);
-	} catch (error) {
-		client.logger.fatal(error);
-		await client.destroy();
-		process.exit(1);
-	}
+        await CheckActivity();
+    } catch (error) {
+        client.logger.fatal(error);
+        await client.destroy();
+        process.exit(1);
+    }
 };
 
 void main();

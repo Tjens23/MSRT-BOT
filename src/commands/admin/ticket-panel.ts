@@ -1,14 +1,14 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { Command, CommandOptions } from '@sapphire/framework';
+import { Command } from '@sapphire/framework';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, PermissionFlagsBits, TextChannel } from 'discord.js';
-ApplyOptions<CommandOptions>({
+
+@ApplyOptions<Command.Options>({
 	description: 'Post the ticket creation panel',
 	name: 'ticket-panel',
 	preconditions: ['OwnerOnly'],
 	requiredUserPermissions: [PermissionFlagsBits.Administrator],
 	fullCategory: ['Admin']
-});
-
+})
 export class EnlistmentCommand extends Command {
 	public override async messageRun(message: Message) {
 		const channel = message.channel as TextChannel;

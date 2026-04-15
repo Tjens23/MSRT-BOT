@@ -6,6 +6,7 @@ declare global {
 			PREFIX: string;
 			OWNERS: string;
 			GUILD_ID: string;
+			TRANSCRIPTS_CHANNEL_ID: string;
 			username: string;
 			password: string;
 			database: string;
