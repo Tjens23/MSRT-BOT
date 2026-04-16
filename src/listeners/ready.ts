@@ -2,6 +2,7 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { Listener } from '@sapphire/framework';
 import type { Store } from '@sapphire/framework';
 import { blue, gray, green, magenta, magentaBright, white, yellow } from 'colorette';
+import { startServerStats } from '../utils/serverStats';
 
 const dev = process.env.NODE_ENV !== 'production';
 
@@ -12,6 +13,10 @@ export class UserEvent extends Listener {
 	public override async run() {
 		this.printBanner();
 		this.printStoreDebugInformation();
+
+		// Start server stats voice channel updates
+		await startServerStats();
+		this.container.logger.info('Server stats channels started.');
 	}
 
 	private printBanner() {
