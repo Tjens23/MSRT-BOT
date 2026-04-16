@@ -33,7 +33,7 @@ export class EnlistmentCommand extends Command {
 					'📆 **LOA** - for when you need to go on LOA'
 			)
 			.setFooter({ iconURL: message.guild!.members.me?.displayAvatarURL().toString(), text: message.guild!.name });
-		await message.delete();
+		await message.delete().catch(() => null);
 		await channel.send({ embeds: [embed], components: [buttons] });
 	}
 }
