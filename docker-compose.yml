@@ -40,20 +40,26 @@ services:
       # Discord bot token (set this in your .env file)
       DISCORD_TOKEN: ${DISCORD_TOKEN}
 
+      OWNER_ID: ${OWNER_ID}
       # Bot owners (space-separated Discord user IDs)
-      OWNERS: ${OWNERS:-000000000000000000}
-
+      OWNERS: ${OWNERS}
       GUILD_ID: ${GUILD_ID:-1019121062312673291}
       MILSIM_UNIT_ID: ${MILSIM_UNIT_ID}
       MILSIM_VOTE_SLUG: ${MILSIM_VOTE_SLUG}
       VOTE_CHANNEL_ID: ${VOTE_CHANNEL_ID}
       VOTE_REMINDER_ROLE: ${VOTE_REMINDER_ROLE}
-
+      ENLISTMENT_PARENT_ID: 1020138400231211008
+      SUPPORT_PARENT_ID: 1476992535862837581
+      HR_PARENT_ID: 1020936334975713330
+      STAFF_PARENT_ID: 1049912971054305290
+      LOA_PARENT_ID: 1050267397396889620
+      TRANSCRIPTS_CHANNEL_ID: 1285700998215630910
       LAVALINK_HOST: lavalink
       LAVALINK_PORT: 2333
       LAVALINK_PASSWORD: youshallnotpass
       LAVALINK_SECURE: 'false'
-
+      env:
+        ./.env
       # Other environment variables
       NODE_ENV: production
     volumes:

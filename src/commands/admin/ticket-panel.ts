@@ -5,7 +5,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, Pe
 @ApplyOptions<Command.Options>({
 	description: 'Post the ticket creation panel',
 	name: 'ticket-panel',
-	preconditions: ['OwnerOnly'],
+	preconditions: [],
 	requiredUserPermissions: [PermissionFlagsBits.Administrator],
 	fullCategory: ['Admin']
 })
