@@ -60,15 +60,6 @@ async function sendEnlistmentEmbed(
 		embeds: [embed],
 		components: [actionRow]
 	});
-	await channel.send({
-		content:
-			`📝 **Next Steps:**\n` +
-			`• Our staff will review your application\n` +
-			`• Please be patient as we have staff across multiple timezones\n` +
-			`• A staff member will be with you shortly\n` +
-			`• Do not create additional tickets for the same purpose\n\n` +
-			`Thank you for your interest in joining MSRT! 🎖️`
-	});
 }
 
 async function sendLOAEmbed(
