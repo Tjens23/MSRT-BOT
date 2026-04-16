@@ -64,6 +64,28 @@ const TICKET_TYPE_MAP = {
 	ticket_hr: TicketTypes.HR
 } as const;
 
+/**
+ * Get the parent category ID for a ticket type
+ * @param ticketType - The type of ticket
+ * @returns The parent category ID from environment variables
+ */
+function getTicketParentId(ticketType: TicketTypes): string | undefined {
+	switch (ticketType) {
+		case TicketTypes.ENLISTMENT:
+			return process.env.ENLISTMENT_PARENT_ID;
+		case TicketTypes.SUPPORT:
+			return process.env.SUPPORT_PARENT_ID;
+		case TicketTypes.LOA:
+			return process.env.LOA_PARENT_ID;
+		case TicketTypes.HR:
+			return process.env.HR_PARENT_ID;
+		case TicketTypes.STAFF:
+			return process.env.STAFF_PARENT_ID;
+		default:
+			return undefined;
+	}
+}
+
 export async function handleButton(interaction: ButtonInteraction) {
 	const typeKey = interaction.customId;
 	const ticketType = TICKET_TYPE_MAP[typeKey as keyof typeof TICKET_TYPE_MAP] as TicketTypes | undefined;
@@ -303,9 +325,11 @@ async function createTicketChannel(
 	// Create private ticket channel
 	let channel;
 	try {
+		const parentId = getTicketParentId(ticketType);
 		channel = await interaction.guild.channels.create({
 			name: `ticket-${interaction.user.username}`.toLowerCase(),
 			type: ChannelType.GuildText,
+			parent: parentId,
 			permissionOverwrites
 		});
 	} catch (error: any) {
