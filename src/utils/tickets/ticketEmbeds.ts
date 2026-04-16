@@ -21,14 +21,25 @@ export async function sendTicketEmbed(
 	const actionRow = makeActionRow(ticket.id);
 	const footerIcon = interaction.guild?.iconURL() || undefined;
 
-	if (ticketType === TicketTypes.ENLISTMENT && data?.callsign && data?.age && data?.timezone && data?.foundOut && data?.game) {
-		await sendEnlistmentEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
-	} else if (ticketType === TicketTypes.LOA && data?.reason && data?.startDate && data?.endDate) {
-		await sendLOAEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
-	} else if (ticketType === TicketTypes.SUPPORT && data?.issue) {
-		await sendSupportEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
-	} else {
-		await sendGenericEmbed(channel, interaction, ticket, ticketType, actionRow, footerIcon);
+	switch (ticketType) {
+		case TicketTypes.ENLISTMENT:
+			if (ticketType === TicketTypes.ENLISTMENT && data?.callsign && data?.age && data?.timezone && data?.foundOut && data?.game) {
+				await sendEnlistmentEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
+			}
+			break;
+		case TicketTypes.LOA:
+			if (ticketType === TicketTypes.LOA && data?.reason && data?.startDate && data?.endDate) {
+				await sendLOAEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
+			}
+			break;
+		case TicketTypes.SUPPORT:
+			if (ticketType === TicketTypes.SUPPORT && data?.issue) {
+				await sendSupportEmbed(channel, interaction, ticket, actionRow, footerIcon, data);
+			}
+			break;
+		default:
+			await sendGenericEmbed(channel, interaction, ticket, ticketType, actionRow, footerIcon);
+			break;
 	}
 }
 
@@ -91,15 +102,6 @@ async function sendLOAEmbed(
 		embeds: [embed],
 		components: [actionRow]
 	});
-	await channel.send({
-		content:
-			`📋 **LOA Request Information:**\n` +
-			`• Staff will review your request shortly\n` +
-			`• Please ensure your dates are accurate\n` +
-			`• You will be notified once your LOA is approved/denied\n` +
-			`• Keep this channel open until your request is processed\n\n` +
-			`**Note:** Your LOA will be effective from the approved start date. 📆`
-	});
 }
 
 async function sendSupportEmbed(
@@ -123,14 +125,6 @@ async function sendSupportEmbed(
 		content: `<@${interaction.user.id}> Your support ticket has been submitted!`,
 		embeds: [embed],
 		components: [actionRow]
-	});
-	await channel.send({
-		content:
-			`📋 **Support Ticket Information:**\n` +
-			`• Staff will review your issue shortly\n` +
-			`• Please provide any additional details if needed\n` +
-			`• Do not create duplicate tickets for the same issue\n\n` +
-			`**Note:** A staff member will be with you as soon as possible. 🛠️`
 	});
 }
 
