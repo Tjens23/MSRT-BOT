@@ -64,6 +64,28 @@ const TICKET_TYPE_MAP = {
 	ticket_hr: TicketTypes.HR
 } as const;
 
+/**
+ * Get the parent category ID for a ticket type
+ * @param ticketType - The type of ticket
+ * @returns The parent category ID from environment variables
+ */
+function getTicketParentId(ticketType: TicketTypes): string | undefined {
+	switch (ticketType) {
+		case TicketTypes.ENLISTMENT:
+			return process.env.ENLISTMENT_PARENT_ID;
+		case TicketTypes.SUPPORT:
+			return process.env.SUPPORT_PARENT_ID;
+		case TicketTypes.LOA:
+			return process.env.LOA_PARENT_ID;
+		case TicketTypes.HR:
+			return process.env.HR_PARENT_ID;
+		case TicketTypes.STAFF:
+			return process.env.STAFF_PARENT_ID;
+		default:
+			return undefined;
+	}
+}
+
 export async function handleButton(interaction: ButtonInteraction) {
 	const typeKey = interaction.customId;
 	const ticketType = TICKET_TYPE_MAP[typeKey as keyof typeof TICKET_TYPE_MAP] as TicketTypes | undefined;
@@ -301,11 +323,21 @@ async function createTicketChannel(
 	}
 
 	// Create private ticket channel
-	const channel = await interaction.guild.channels.create({
-		name: `ticket-${interaction.user.username}`.toLowerCase(),
-		type: ChannelType.GuildText,
-		permissionOverwrites
-	});
+	let channel;
+	try {
+		const parentId = getTicketParentId(ticketType);
+		channel = await interaction.guild.channels.create({
+			name: `ticket-${interaction.user.username}`.toLowerCase(),
+			type: ChannelType.GuildText,
+			parent: parentId,
+			permissionOverwrites
+		});
+	} catch (error: any) {
+		console.error('Error creating ticket channel:', error);
+		return interaction.editReply({ 
+			content: `❌ Failed to create ticket channel. The bot may not have permission to create channels. Error: ${error.message}` 
+		});
+	}
 
 	if (!channel) {
 		return interaction.editReply({ content: 'Failed to create ticket channel.' });
@@ -324,6 +356,16 @@ async function createTicketChannel(
 			callsign: data?.callsign || interaction.user.username
 		});
 		await user.save();
+		// Reload user to get fresh relations
+		user = await User.findOne({
+			where: { userId: interaction.user.id },
+			relations: ['tickets']
+		});
+		
+		if (!user) {
+			console.error('Failed to create or reload user');
+			return interaction.editReply({ content: '❌ Failed to create user. Please try again.' });
+		}
 	} else if (data?.callsign) {
 		// Update callsign if provided in modal
 		user.callsign = data.callsign;
@@ -334,10 +376,46 @@ async function createTicketChannel(
 	const existingTicket = user.tickets?.find((ticket) => ticket.ticketType === ticketType && !ticket.closed);
 
 	if (existingTicket) {
-		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
-		return interaction.editReply({
-			content: `❌ You already have an open ${ticketTypeName.toLowerCase()} ticket. Please close your existing ticket before creating a new one.`
-		});
+		// Try to verify the ticket channel still exists by checking all guild channels
+		let channelExists = false;
+		try {
+			const allChannels = await interaction.guild.channels.fetch();
+			const usernameLower = interaction.user.username.toLowerCase();
+			// Look for active (ticket-username) or closed (closed-username) channels
+			const userChannels = allChannels.filter(
+				(ch) => ch && ch.isTextBased() && 
+				(ch.name === `ticket-${usernameLower}` || 
+				 ch.name === `closed-${usernameLower}`)
+			);
+			channelExists = userChannels.size > 0;
+			console.log(`Channel exists check for ${interaction.user.username}: ${channelExists}, Found ${userChannels.size} channels, ticket ID: ${existingTicket.id}`);
+			userChannels.forEach(ch => {
+				if (ch) console.log(`  - Found channel: ${ch.name}`);
+			});
+		} catch (error) {
+			console.error('Error checking ticket channels:', error);
+		}
+
+		if (!channelExists) {
+			// Channel doesn't exist, mark the ticket as closed
+			console.log(`Channel for ticket ${existingTicket.id} not found, marking as closed in database`);
+			existingTicket.closed = true;
+			try {
+				const result = await existingTicket.save();
+				console.log(`Ticket ${existingTicket.id} closed successfully, closed value is now: ${result.closed}`);
+				// Continue to create new ticket
+			} catch (saveError) {
+				console.error('Error closing ticket:', saveError);
+				return interaction.editReply({ content: `❌ Error updating old ticket: ${saveError instanceof Error ? saveError.message : 'Unknown error'}` });
+			}
+		} else {
+			// Channel exists, so it really is an open ticket
+			const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
+			console.log(`User ${interaction.user.username} already has an open ${ticketTypeName} ticket:`, existingTicket);
+			return interaction.editReply({
+				content: `❌ You already have an open ${ticketTypeName.toLowerCase()} ticket. Please close your existing ticket before creating a new one.`
+			});
+		}
 	}
 
 	// Create correct ticket subclass based on type
@@ -426,17 +504,29 @@ async function createTicketChannel(
 			break;
 
 		default:
-			ticket = Ticket.create({
-				user,
-				ticketType,
-				closed: false,
-				title: `Ticket - ${interaction.user.username}`,
-				description: 'New ticket request'
-			});
+			const defaultTicket = new Ticket();
+			defaultTicket.user = user;
+			defaultTicket.ticketType = ticketType;
+			defaultTicket.closed = false;
+			defaultTicket.title = `Ticket - ${interaction.user.username}`;
+			defaultTicket.description = 'New ticket request';
+			ticket = defaultTicket;
 	}
 
-	await ticket.save();
+	try {
+		await ticket.save();
+		console.log('Ticket saved with ID:', ticket.id);
+	} catch (error) {
+		console.error('Error saving ticket:', error);
+		console.error('Ticket object:', ticket);
+		return interaction.editReply({ content: `❌ Failed to save ticket to database: ${error instanceof Error ? error.message : 'Unknown error'}` });
+	}
 
+	// Verify ticket ID exists before proceeding
+	if (!ticket.id) {
+		console.error('Ticket ID is undefined after save');
+		return interaction.editReply({ content: '❌ Ticket ID is undefined. Please try again.' });
+	}
 	// Create and send embed with ticket information
 	if (ticketType === TicketTypes.ENLISTMENT && data?.callsign && data?.age && data?.timezone && data?.foundOut && data?.game) {
 		const transcriptButton = new ButtonBuilder()
@@ -759,10 +849,14 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 	}
 
 	// Extract ticket ID from custom ID
-	const ticketId = parseInt(interaction.customId.split('_')[1]);
+	const customIdParts = interaction.customId.split('_');
+	const ticketIdStr = customIdParts[1];
+	const ticketId = parseInt(ticketIdStr);
 
-	if (!ticketId) {
-		return interaction.reply({ content: 'Invalid ticket ID.', ephemeral: true });
+	console.log('Transcript button pressed - customId:', interaction.customId, 'parts:', customIdParts, 'ticketIdStr:', ticketIdStr, 'ticketId:', ticketId);
+
+	if (!ticketId || isNaN(ticketId)) {
+		return interaction.reply({ content: 'Invalid ticket ID. Please contact an administrator.', ephemeral: true });
 	}
 
 	// Defer the reply to prevent timeout
@@ -852,17 +946,63 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 		transcriptContent += `End of Transcript\n`;
 		transcriptContent += `Generated by MSRT Bot on ${new Date().toLocaleString()}\n`;
 
-		// Create text file attachment
+		// Get ticket type name for filename
+		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticket.ticketType)].toLowerCase();
+
+		// Get count of tickets of the same type for numbering
+		const ticketCountOfType = await Ticket.count({
+			where: { ticketType: ticket.ticketType }
+		});
+
+		// Create text file attachment with ticket type in filename
 		const buffer = Buffer.from(transcriptContent, 'utf-8');
 		const textAttachment = {
 			attachment: buffer,
-			name: `ticket-${ticket.id}-transcript.txt`
+			name: `${ticketTypeName}-${ticketCountOfType}-transcript.txt`
 		};
 
-		await interaction.editReply({
-			content: `📜 Transcript generated for Ticket #${ticket.id}\n\`\`\`\n📋 Messages: ${messages.length}\n🎫 Ticket Type: ${ticket.ticketType}\n👤 User: ${ticket.user.username}\n📅 Generated: ${new Date().toLocaleString()}\n\`\`\``,
-			files: [textAttachment]
-		});
+		// Get transcripts channel from environment variable
+		const transcriptsChannelId = process.env.TRANSCRIPTS_CHANNEL_ID;
+		if (!transcriptsChannelId) {
+			return interaction.editReply({
+				content: '❌ Transcripts channel ID is not configured in the environment variables.'
+			});
+		}
+
+		// Fetch the transcripts channel
+		let transcriptsChannel;
+		try {
+			transcriptsChannel = await interaction.guild.channels.fetch(transcriptsChannelId);
+		} catch (error) {
+			console.error('Error fetching transcripts channel:', error);
+			return interaction.editReply({
+				content: '❌ Failed to find the transcripts channel. Please check the TRANSCRIPTS_CHANNEL_ID configuration.'
+			});
+		}
+
+		if (!transcriptsChannel || !transcriptsChannel.isTextBased()) {
+			return interaction.editReply({
+				content: '❌ The transcripts channel is not a valid text channel.'
+			});
+		}
+
+		// Send transcript to the transcripts channel
+		try {
+			const transcriptMessage = await transcriptsChannel.send({
+				content: `**Ticket Transcript - ${ticketTypeName.charAt(0).toUpperCase() + ticketTypeName.slice(1)} #${ticketCountOfType}**\n📋 Messages: ${messages.length}\n🎫 Ticket Type: ${ticket.ticketType}\n👤 User: ${ticket.user.username} (${ticket.user.userId})\n📅 Generated: ${new Date().toLocaleString()}`,
+				files: [textAttachment]
+			});
+
+			// Notify user in ticket channel with link to transcript
+			await interaction.editReply({
+				content: `✅ Transcript generated and sent to <#${transcriptsChannelId}>!\n[View Transcript](${transcriptMessage.url})`
+			});
+		} catch (error) {
+			console.error('Error sending transcript to channel:', error);
+			return interaction.editReply({
+				content: '❌ Failed to send transcript to the transcripts channel. Please try again or contact an administrator.'
+			});
+		}
 
 		return; // Success path
 	} catch (error) {
