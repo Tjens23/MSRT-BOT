@@ -1,6 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
 import { EmbedBuilder, Message } from 'discord.js';
+import { database } from '../../database';
 import WarnEntity from '../../database/entities/WarnEntity';
 
 @ApplyOptions<Command.Options>({
@@ -14,7 +15,7 @@ export class HistoryCommand extends Command {
 		const user = await args.pick('member').catch(() => null);
 
 		if (!user) return message.reply('Invalid usage! Please provide a user to warn.');
-		const warnings = await WarnEntity.find({ where: { user: { userId: user.id } } });
+		const warnings = await database.manager.find(WarnEntity, { where: { user: { userId: user.id } }, relations: ['moderator'] });
 
 		if (warnings.length === 0) {
 			return message.reply(`${user.user.tag} has no warnings.`);
@@ -24,7 +25,7 @@ export class HistoryCommand extends Command {
 			.setTitle(`Warning History for ${user.user.tag}`)
 			.setColor('Yellow')
 			.setThumbnail(user.user.displayAvatarURL({ forceStatic: true }))
-			.setDescription(warnings.map((warn, index) => `**${index + 1}.** ${warn.reason} (Moderator: ${warn.moderator.username})`).join('\n'));
+			.setDescription(warnings.map((warn: WarnEntity, index: number) => `**${index + 1}.** ${warn.reason} (Moderator: ${warn.moderator?.username ?? 'Unknown'})`).join('\n'));
 
 		message.reply({ embeds: [embed] });
 	}

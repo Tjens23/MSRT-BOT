@@ -1,4 +1,4 @@
-import { BaseEntity, Column, Entity, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import User from './User';
 
 @Entity()
@@ -12,6 +12,10 @@ export default class WarnEntity extends BaseEntity {
 	@ManyToOne(() => User, (user) => user.warns, { onDelete: 'CASCADE' })
 	user!: User;
 
-	@OneToOne(() => User, { onDelete: 'CASCADE' })
-	moderator!: User;
+	@ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
+	@JoinColumn({ name: 'moderatorId' })
+	moderator!: User | null;
+
+	@CreateDateColumn()
+	createdAt!: Date;
 }

@@ -1,7 +1,9 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Args, Command } from '@sapphire/framework';
-import { EmbedBuilder, Message } from 'discord.js';
+import { Colors, EmbedBuilder, Message } from 'discord.js';
+import { database } from '../../database';
 import WarnEntity from '../../database/entities/WarnEntity';
+import User from '../../database/entities/User';
 
 @ApplyOptions<Command.Options>({
 	description: 'Warns a user',
@@ -12,23 +14,44 @@ import WarnEntity from '../../database/entities/WarnEntity';
 export class WarnCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
 		const user = await args.pick('member').catch(() => null);
-		const reason = await args.rest('string');
-
 		if (!user) return message.reply('Invalid usage! Please provide a user to warn.');
+
+		const reason = await args.rest('string').catch(() => '');
 		if (!reason) return message.reply('Invalid usage! Please provide a reason for the warning.');
+
 		if (user.roles.highest.position >= message.member!.roles.highest.position)
 			return message.reply('You cannot warn this user because they have a higher or equal role than you.');
 
-		await WarnEntity.create({
-			reason,
-			user: { userId: user.id, username: user.user.tag, callsign: user.user.tag },
-			moderator: { userId: message.author.id, username: message.author.tag, callsign: message.author.tag }
-		}).save();
+		let targetUser = await database.manager.findOne(User, { where: { userId: user.id } });
+		if (!targetUser) {
+			targetUser = new User();
+			targetUser.userId = user.id;
+			targetUser.username = user.user.tag;
+			targetUser.callsign = user.user.tag;
+			await database.manager.save(targetUser);
+		}
+
+		let moderator = await database.manager.findOne(User, { where: { userId: message.author.id } });
+		if (!moderator) {
+			moderator = new User();
+			moderator.userId = message.author.id;
+			moderator.username = message.author.tag;
+			moderator.callsign = message.author.tag;
+			await database.manager.save(moderator);
+		}
+
+		const warn = new WarnEntity();
+		warn.reason = reason;
+		warn.user = targetUser;
+		warn.moderator = moderator;
+		await database.manager.save(warn);
 
 		const embed = new EmbedBuilder()
+		.setAuthor({ name: 'You have been warned', iconURL: user.user.displayAvatarURL({ forceStatic: true }) || undefined })
 			.setDescription(`${user.user.tag}, You have been warned in ${message.guild!.name} for the following reason: ${reason}`)
 			.addFields({ name: 'Moderator', value: `${message.author.tag}`, inline: true })
-			.setColor('Yellow');
+			.setThumbnail(message.guild?.iconURL({ forceStatic: true }) || '')
+			.setColor(Colors.Red);
 		user.send({ embeds: [embed] }).catch(() => null);
 
 		message.reply(`${user.user.tag} has been warned.`);

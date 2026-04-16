@@ -29,8 +29,6 @@ export default class PlayCommand extends Command {
 
 		if (!message.guild) return;
 
-		const searchQuery = query.startsWith('https://') || query.startsWith('http://') ? query : { query, source: 'scsearch' as const };
-
 		// Get existing player or create new one
 		const player =
 			client.lavalink.getPlayer(message.guild.id) ||
@@ -45,9 +43,9 @@ export default class PlayCommand extends Command {
 				applyVolumeAsFilter: false
 			}));
 
-		const wasConnected = player.connected;
+		const connected = player.connected;
 
-		if (!player.connected) {
+		if (!connected) {
 			await player.connect();
 		}
 
@@ -55,8 +53,14 @@ export default class PlayCommand extends Command {
 			return message.reply('You need to be in my voice channel!');
 		}
 
+		const isUrl = query.startsWith('https://') || query.startsWith('http://');
+
 		// Search for tracks
-		const response = await player.search(searchQuery, message.author);
+		const response = await player.search(isUrl ? { query } : { query, source: 'ytmsearch' as const }, message.author);
+
+		client.logger.debug(
+			`[Play] Search response - loadType: ${response?.loadType}, tracks: ${response?.tracks?.length ?? 0}, exception: ${JSON.stringify(response?.exception)}`
+		);
 
 		if (!response || !response.tracks?.length) {
 			const errorMsg = response?.exception ? `: ${response.exception.message}` : '';
@@ -93,7 +97,12 @@ export default class PlayCommand extends Command {
 		await message.reply({ embeds: [embed] });
 
 		if (!player.playing) {
-			await player.play(wasConnected ? { volume: 80, paused: false } : undefined);
+			try {
+				await player.play(connected ? { volume: 80, paused: false } : undefined);
+			} catch (e) {
+				client.logger.error('Failed to play track:', e);
+				return message.reply(`Failed to start playback: ${e instanceof Error ? e.message : 'Unknown error'}`);
+			}
 		}
 	}
 

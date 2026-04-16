@@ -11,24 +11,19 @@ plugins:
         allowDirectVideoIds: true
         allowDirectPlaylistIds: true
         clients:
-            - ANDROID_MUSIC
-            - ANDROID_TESTSUITE
+            - MUSIC
+            - ANDROID_VR
             - WEB
-            - TVHTML5EMBEDDED
-        # OAuth is required for most videos now. To set up:
-        # 1. Run: docker run ghcr.io/lavalink-devs/youtube-source:oauth
-        # 2. Follow Google sign-in in browser
-        # 3. Copy refreshToken below
-        # oauth:
-        #     enabled: true
-        #     refreshToken: "YOUR_REFRESH_TOKEN_HERE"
+            - WEBEMBEDDED
+        oauth:
+            enabled: true
 
 lavalink:
     plugins:
-        - dependency: "dev.lavalink.youtube:youtube-plugin:1.12.0"
-          repository: "https://maven.lavalink.dev/releases"
+        - dependency: 'dev.lavalink.youtube:youtube-plugin:1.18.0'
+          repository: 'https://maven.lavalink.dev/releases'
     server:
-        password: "youshallnotpass"
+        password: 'youshallnotpass'
         sources:
             youtube: false
             bandcamp: true
