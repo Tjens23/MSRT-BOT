@@ -29,7 +29,7 @@ export async function handleTranscriptButton(interaction: ButtonInteraction) {
 
 		const channel = interaction.channel as TextChannel;
 
-		const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticket.ticketType)].toLowerCase();
+		const ticketTypeName = TicketTypes[ticket.ticketType]?.toLowerCase() ?? 'unknown';
 		const ticketCountOfType = await Ticket.count({ where: { ticketType: ticket.ticketType } });
 
 		const attachment = await createTranscript(channel, {
