@@ -84,7 +84,9 @@ export async function getAllUsersServerTime(): Promise<UserServerTime[]> {
 			};
 		})
 		.sort((a, b) => {
-			if (!a.timeInServer || !b.timeInServer) return 0;
+			if (!a.timeInServer && !b.timeInServer) return 0;
+			if (!a.timeInServer) return 1;
+			if (!b.timeInServer) return -1;
 			return b.timeInServer.total - a.timeInServer.total;
 		});
 }
