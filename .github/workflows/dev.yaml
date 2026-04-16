@@ -1,0 +1,31 @@
+name: Pull request check!
+on:
+    pull_request:
+        types: [opened, reopened]
+permissions:
+    packages: write
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v4
+
+            - name: build image
+              run: docker buildx -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
+
+    test:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - run: echo "hello"
