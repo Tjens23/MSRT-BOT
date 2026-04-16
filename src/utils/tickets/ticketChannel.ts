@@ -186,7 +186,7 @@ export async function createTicketChannel(interaction: ButtonInteraction | Modal
 				});
 			}
 		} else {
-			const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
+			const ticketTypeName = TicketTypes[ticketType];
 			return interaction.editReply({
 				content: `❌ You already have an open ${ticketTypeName.toLowerCase()} ticket. Please close your existing ticket before creating a new one.`
 			});
