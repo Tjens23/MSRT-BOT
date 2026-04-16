@@ -139,10 +139,11 @@ export async function createTicketChannel(interaction: ButtonInteraction | Modal
 	});
 
 	if (!user) {
+		const fallbackCallsign = `${interaction.user.username}-${interaction.user.id}`;
 		user = User.create({
 			userId: interaction.user.id,
 			username: interaction.user.username,
-			callsign: data?.callsign || interaction.user.username
+			callsign: data?.callsign || fallbackCallsign
 		});
 		await user.save();
 		user = await User.findOne({
@@ -186,7 +187,7 @@ export async function createTicketChannel(interaction: ButtonInteraction | Modal
 				});
 			}
 		} else {
-			const ticketTypeName = Object.keys(TicketTypes)[Object.values(TicketTypes).indexOf(ticketType)];
+			const ticketTypeName = TicketTypes[ticketType];
 			return interaction.editReply({
 				content: `❌ You already have an open ${ticketTypeName.toLowerCase()} ticket. Please close your existing ticket before creating a new one.`
 			});
