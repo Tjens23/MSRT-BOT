@@ -18,6 +18,13 @@ export function registerLavalinkEvents(): void {
 		console.error(`[Lavalink] Node "${node.id}" error:`, error);
 	});
 
+	// Debug event listener - surfaces internal lavalink-client issues
+	client.lavalink.on('debug', (eventKey: string, eventData: any) => {
+		if (eventData?.state === 'error' || eventData?.state === 'warn') {
+			console.warn(`[Lavalink-Debug] [${eventKey}] ${eventData.message}`);
+		}
+	});
+
 	// Track events
 	client.lavalink.on('trackStart', (player: any, track: any) => {
 		const channel = client.channels.cache.get(player.textChannelId);
