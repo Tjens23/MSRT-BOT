@@ -3,6 +3,47 @@ import { createTranscript } from 'discord-transcript-v2';
 import Ticket from '../../database/entities/Ticket';
 import { TicketTypes } from '../enums/TicketTypes';
 
+/**
+ * Generate and send a transcript to the transcripts channel
+ * @returns true if transcript was sent successfully, false otherwise
+ */
+async function generateAndSendTranscript(interaction: ButtonInteraction, ticket: Ticket, channel: TextChannel, closedBy?: string): Promise<boolean> {
+	const transcriptsChannelId = process.env.TRANSCRIPTS_CHANNEL_ID;
+	if (!transcriptsChannelId) {
+		console.warn('TRANSCRIPTS_CHANNEL_ID not configured');
+		return false;
+	}
+
+	try {
+		const transcriptsChannel = await interaction.guild!.channels.fetch(transcriptsChannelId);
+		if (!transcriptsChannel || !transcriptsChannel.isTextBased()) {
+			console.warn('Transcripts channel not found or not a text channel');
+			return false;
+		}
+
+		const ticketTypeName = TicketTypes[ticket.ticketType]?.toLowerCase() ?? 'unknown';
+		const ticketCountOfType = await Ticket.count({ where: { ticketType: ticket.ticketType } });
+
+		const attachment = await createTranscript(channel, {
+			limit: -1,
+			filename: `${ticketTypeName}-${ticketCountOfType}-transcript.html`,
+			poweredBy: false,
+			saveImages: false
+		});
+
+		const closedByText = closedBy ? `\n🔒 Closed by: <@${closedBy}>` : '';
+		await transcriptsChannel.send({
+			content: `**Ticket Transcript - ${ticketTypeName.charAt(0).toUpperCase() + ticketTypeName.slice(1)} #${ticketCountOfType}**\n🎫 Ticket Type: ${ticket.ticketType}\n👤 User: ${ticket.user.username} (${ticket.user.userId})\n📅 Generated: ${new Date().toLocaleString()}${closedByText}`,
+			files: [attachment]
+		});
+
+		return true;
+	} catch (error) {
+		console.error('Error generating/sending transcript:', error);
+		return false;
+	}
+}
+
 export async function handleTranscriptButton(interaction: ButtonInteraction) {
 	if (!interaction.guild || !interaction.channel) {
 		return interaction.reply({ content: 'This command can only be used in a server channel.', ephemeral: true });
@@ -116,10 +157,16 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 		ticket.closed = true;
 		await ticket.save();
 
+		const channel = interaction.channel as TextChannel;
+
+		// Generate transcript automatically before closing
+		const transcriptSent = await generateAndSendTranscript(interaction, ticket, channel, interaction.user.id);
+
 		const deleteButton = new ButtonBuilder().setCustomId(`delete_${ticket.id}`).setLabel('🗑️ Delete Channel').setStyle(ButtonStyle.Danger);
 
 		const deleteActionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(deleteButton);
 
+		const transcriptsChannelId = process.env.TRANSCRIPTS_CHANNEL_ID;
 		const closedEmbed = new EmbedBuilder()
 			.setColor('#ff0000')
 			.setTitle('🔒 Ticket Closed')
@@ -127,7 +174,8 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 			.addFields(
 				{ name: '📋 Ticket ID', value: ticket.id.toString(), inline: true },
 				{ name: '👤 Original User', value: `<@${ticket.user.userId}>`, inline: true },
-				{ name: '📅 Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true }
+				{ name: '📅 Closed At', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
+				{ name: '📋 Transcript', value: transcriptSent ? `✅ Saved to <#${transcriptsChannelId}>` : '❌ Not generated', inline: true }
 			)
 			.setTimestamp()
 			.setFooter({
@@ -135,7 +183,6 @@ export async function handleCloseTicketButton(interaction: ButtonInteraction) {
 				iconURL: interaction.user.displayAvatarURL()
 			});
 
-		const channel = interaction.channel as TextChannel;
 		await channel.send({ embeds: [closedEmbed], components: [deleteActionRow] });
 
 		try {

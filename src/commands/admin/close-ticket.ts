@@ -1,8 +1,17 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
-import { ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import {
+	ApplicationIntegrationType,
+	InteractionContextType,
+	ChatInputCommandInteraction,
+	EmbedBuilder,
+	PermissionFlagsBits,
+	TextChannel
+} from 'discord.js';
+import { createTranscript } from 'discord-transcript-v2';
 import { database } from '../../database';
 import Ticket from '../../database/entities/Ticket';
+import { TicketTypes } from '../../utils/enums/TicketTypes';
 
 @ApplyOptions<Command.Options>({
 	description: 'Close the current ticket channel',
@@ -71,6 +80,37 @@ export class CloseTicketCommand extends Command {
 			ticket.closed = true;
 			await ticket.save();
 
+			// Generate transcript before closing
+			const channel = interaction.channel as TextChannel;
+			const ticketTypeName = TicketTypes[ticket.ticketType]?.toLowerCase() ?? 'unknown';
+			const ticketCountOfType = await Ticket.count({ where: { ticketType: ticket.ticketType } });
+
+			let transcriptSent = false;
+			const transcriptsChannelId = process.env.TRANSCRIPTS_CHANNEL_ID;
+
+			if (transcriptsChannelId) {
+				try {
+					const transcriptsChannel = await interaction.guild.channels.fetch(transcriptsChannelId);
+
+					if (transcriptsChannel && transcriptsChannel.isTextBased()) {
+						const attachment = await createTranscript(channel, {
+							limit: -1,
+							filename: `${ticketTypeName}-${ticketCountOfType}-transcript.html`,
+							poweredBy: false,
+							saveImages: false
+						});
+
+						await transcriptsChannel.send({
+							content: `**Ticket Transcript - ${ticketTypeName.charAt(0).toUpperCase() + ticketTypeName.slice(1)} #${ticketCountOfType}**\n🎫 Ticket Type: ${ticket.ticketType}\n👤 User: <@${ticket.user.userId}> (${ticket.user.userId})\n📅 Generated: ${new Date().toLocaleString()}\n🔒 Closed by: <@${interaction.user.id}>`,
+							files: [attachment]
+						});
+						transcriptSent = true;
+					}
+				} catch (error) {
+					console.error('Error generating/sending transcript:', error);
+				}
+			}
+
 			// Create closure embed
 			const closeEmbed = new EmbedBuilder()
 				.setColor('#ff0000')
@@ -79,7 +119,8 @@ export class CloseTicketCommand extends Command {
 				.addFields(
 					{ name: '👤 Closed by', value: `<@${interaction.user.id}>`, inline: true },
 					{ name: '📅 Closed at', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
-					{ name: '🎫 Ticket ID', value: ticket.id.toString(), inline: true }
+					{ name: '🎫 Ticket ID', value: ticket.id.toString(), inline: true },
+					{ name: '📋 Transcript', value: transcriptSent ? `✅ Saved to <#${transcriptsChannelId}>` : '❌ Not generated', inline: true }
 				)
 				.setTimestamp()
 				.setFooter({ text: 'This channel will be deleted in 30 seconds.' });
