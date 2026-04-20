@@ -20,47 +20,62 @@ export class InteractionCreateEvent extends Listener {
 	}
 
 	public async run(interaction: Interaction): Promise<void> {
-		// Handle button interactions
-		if (interaction.isButton()) {
-			// Handle ticket creation buttons
-			if (
-				interaction.customId === 'ticket_enlistment' 	||
-				interaction.customId === 'ticket_staff' 		||
-				interaction.customId === 'ticket_support' 		||
-				interaction.customId === 'ticket_loa' 			||
-				interaction.customId === 'ticket_hr'
-			) {
-				await handleButton(interaction);
+		try {
+			// Handle button interactions
+			if (interaction.isButton()) {
+				// Handle ticket creation buttons
+				if (
+					interaction.customId === 'ticket_enlistment' ||
+					interaction.customId === 'ticket_staff' ||
+					interaction.customId === 'ticket_support' ||
+					interaction.customId === 'ticket_loa' ||
+					interaction.customId === 'ticket_hr'
+				) {
+					await handleButton(interaction);
+				}
+				// Handle transcript buttons
+				else if (interaction.customId.startsWith('transcript_')) {
+					await handleTranscriptButton(interaction);
+				}
+				// Handle close ticket buttons
+				else if (interaction.customId.startsWith('close_')) {
+					await handleCloseTicketButton(interaction);
+				}
+				// Handle delete channel buttons
+				else if (interaction.customId.startsWith('delete_')) {
+					await handleDeleteChannelButton(interaction);
+				}
 			}
-			// Handle transcript buttons
-			else if (interaction.customId.startsWith('transcript_')) {
-				await handleTranscriptButton(interaction);
-			}
-			// Handle close ticket buttons
-			else if (interaction.customId.startsWith('close_')) {
-				await handleCloseTicketButton(interaction);
-			}
-			// Handle delete channel buttons
-			else if (interaction.customId.startsWith('delete_')) {
-				await handleDeleteChannelButton(interaction);
-			}
-		}
 
-		// Handle modal submissions
-		if (interaction.isModalSubmit()) {
-			if (interaction.customId === 'enlistment_modal') {
-				await handleEnlistmentModal(interaction);
-			} else if (interaction.customId === 'loa_modal') {
-				await handleLOAModal(interaction);
-			} else if (interaction.customId === 'support_modal') {
-				await handleSupportModal(interaction);
+			// Handle modal submissions
+			if (interaction.isModalSubmit()) {
+				if (interaction.customId === 'enlistment_modal') {
+					await handleEnlistmentModal(interaction);
+				} else if (interaction.customId === 'loa_modal') {
+					await handleLOAModal(interaction);
+				} else if (interaction.customId === 'support_modal') {
+					await handleSupportModal(interaction);
+				}
 			}
-		}
 
-		// Handle select menu interactions for game roles
-		if (interaction.isStringSelectMenu()) {
-			if (interaction.customId === 'game_roles_tactical' || interaction.customId === 'game_roles_casual') {
-				await this.handleGameRoleSelection(interaction);
+			// Handle select menu interactions for game roles
+			if (interaction.isStringSelectMenu()) {
+				if (interaction.customId === 'game_roles_tactical' || interaction.customId === 'game_roles_casual') {
+					await this.handleGameRoleSelection(interaction);
+				}
+			}
+		} catch (error) {
+			this.container.logger.error(`Error handling interaction ${interaction.id}:`, error);
+			// Try to respond if interaction hasn't been handled
+			try {
+				if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+					await interaction.reply({ content: 'An error occurred while processing your request. Please try again.', ephemeral: true });
+				} else if (interaction.isRepliable() && interaction.deferred) {
+					await interaction.editReply({ content: 'An error occurred while processing your request. Please try again.' });
+				}
+			} catch (replyError) {
+				// Interaction may have already been handled or timed out
+				this.container.logger.debug('Could not send error response to interaction:', replyError);
 			}
 		}
 	}

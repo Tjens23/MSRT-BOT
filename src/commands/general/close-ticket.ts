@@ -1,13 +1,6 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { Command } from '@sapphire/framework';
-import {
-	ApplicationIntegrationType,
-	InteractionContextType,
-	ChatInputCommandInteraction,
-	EmbedBuilder,
-	PermissionFlagsBits,
-	TextChannel
-} from 'discord.js';
+import { ApplicationIntegrationType, InteractionContextType, ChatInputCommandInteraction, EmbedBuilder, TextChannel } from 'discord.js';
 import { createTranscript } from 'discord-transcript-v2';
 import { database } from '../../database';
 import Ticket from '../../database/entities/Ticket';
@@ -15,8 +8,8 @@ import { TicketTypes } from '../../utils/enums/TicketTypes';
 
 @ApplyOptions<Command.Options>({
 	description: 'Close the current ticket channel',
-	requiredUserPermissions: [PermissionFlagsBits.Administrator],
-	fullCategory: ['Admin']
+	requiredUserPermissions: [],
+	fullCategory: ['General']
 })
 export class CloseTicketCommand extends Command {
 	public override registerApplicationCommands(registry: Command.Registry) {
@@ -54,7 +47,6 @@ export class CloseTicketCommand extends Command {
 			});
 		}
 
-		// Initialize database if needed
 		if (!database.isInitialized) {
 			await database.initialize();
 		}

@@ -19,8 +19,12 @@ export const updateServerStats = async () => {
 	const guild = client.guilds.cache.get(process.env.GUILD_ID!);
 	if (!guild) return;
 
-	// Ensure members are cached
-	await guild.members.fetch();
+	// Ensure members are cached with timeout and error handling
+	try {
+		await guild.members.fetch({ time: 120_000, withPresences: false });
+	} catch (error) {
+		client.logger.warn(`Failed to fetch guild members for stats update: ${error}. Using cached members.`);
+	}
 
 	for (const stat of STATS_CONFIG) {
 		const role = guild.roles.cache.get(stat.roleId);
