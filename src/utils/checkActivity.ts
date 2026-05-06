@@ -90,9 +90,8 @@ export const CheckActivity = async () => {
 			try {
 				await member.send("You've been inactive for 2 weeks. Please be more active or you will be kicked.");
 			} catch (err) {
-				console.error(`Failed to send DM to ${member.user.tag}:`, err);
-
 				const devNotifyChannel = (await client.channels.fetch(devNotifyChannelId)) as TextChannel;
+				devNotifyChannel.send(`Failed to DM ${member.user.tag} about inactivity. They may have DMs closed.`);
 				if (!devNotifyChannel || !devNotifyChannel.isTextBased()) {
 					console.error(`Dev-notify channel not found.`);
 					continue;
